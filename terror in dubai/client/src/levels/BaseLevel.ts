@@ -1,13 +1,15 @@
-import { Scene, MeshBuilder, StandardMaterial, Color3, HemisphericLight, Vector3, FogMode } from '@babylonjs/core';
+import { Scene, MeshBuilder, StandardMaterial, Color3, HemisphericLight, Vector3, PointLight, DirectionalLight, ShadowGenerator } from '@babylonjs/core';
 import { ILevel, IEnemy, MemoryFragment } from '../types';
 import { AssetLoader } from '../utils/AssetLoader';
 import { PlayerController } from '../player/PlayerController';
+import { isMobile, performanceConfig } from '../config/gameConfig';
 
 export abstract class BaseLevel implements ILevel {
   public isComplete: boolean = false;
   protected assetLoader: AssetLoader;
   protected enemies: IEnemy[] = [];
   protected memoryFragments: MemoryFragment[] = [];
+  protected shadowGenerator: ShadowGenerator | null = null;
 
   constructor(public scene: Scene, protected player: PlayerController) {
     this.assetLoader = new AssetLoader(scene);
@@ -18,18 +20,59 @@ export abstract class BaseLevel implements ILevel {
   abstract checkWinCondition(): boolean;
 
   protected createEnvironment(): void {
-    // Lighting - dim and eerie
-    const light = new HemisphericLight('light', new Vector3(0, 1, 0), this.scene);
-    light.intensity = 0.3;
-    light.diffuse = new Color3(0.5, 0.3, 0.3);
+    // Enhanced lighting system
+    this.createLighting();
 
-    // Fog
-    this.scene.fogMode = FogMode.FOGMODE_EXP;
+    // Fog - use numeric value (1 = EXP fog mode)
+    this.scene.fogMode = 1; // Scene.FOGMODE_EXP
     this.scene.fogDensity = 0.02;
     this.scene.fogColor = new Color3(0.1, 0.05, 0.05);
 
+    // Ambient color for the scene
+    this.scene.ambientColor = new Color3(0.15, 0.08, 0.08);
+
+    // Clear color (background)
+    this.scene.clearColor.set(0.05, 0.02, 0.02, 1);
+
     // Ground
     this.createGround();
+  }
+
+  protected createLighting(): void {
+    // Main hemispheric light - dim and eerie
+    const hemiLight = new HemisphericLight('hemiLight', new Vector3(0, 1, 0), this.scene);
+    hemiLight.intensity = 0.25;
+    hemiLight.diffuse = new Color3(0.6, 0.3, 0.3);
+    hemiLight.groundColor = new Color3(0.1, 0.05, 0.1);
+    hemiLight.specular = new Color3(0.1, 0.1, 0.1);
+
+    // Directional light for shadows (desktop only)
+    if (performanceConfig.shadowsEnabled && !isMobile) {
+      const dirLight = new DirectionalLight('dirLight', new Vector3(-0.5, -1, -0.3), this.scene);
+      dirLight.position = new Vector3(20, 40, 20);
+      dirLight.intensity = 0.3;
+      dirLight.diffuse = new Color3(0.8, 0.4, 0.4);
+
+      // Shadow generator
+      this.shadowGenerator = new ShadowGenerator(1024, dirLight);
+      this.shadowGenerator.useBlurExponentialShadowMap = true;
+      this.shadowGenerator.blurKernel = 32;
+      this.shadowGenerator.darkness = 0.6;
+    }
+
+    // Accent point lights for atmosphere
+    this.createAccentLight(new Vector3(-20, 8, -20), new Color3(0.8, 0.2, 0.2), 0.5, 25);
+    this.createAccentLight(new Vector3(20, 8, -20), new Color3(0.6, 0.1, 0.3), 0.4, 25);
+    this.createAccentLight(new Vector3(0, 10, 20), new Color3(0.5, 0.1, 0.1), 0.6, 30);
+  }
+
+  protected createAccentLight(position: Vector3, color: Color3, intensity: number, range: number): PointLight {
+    const light = new PointLight(`accentLight_${position.toString()}`, position, this.scene);
+    light.diffuse = color;
+    light.specular = color.scale(0.3);
+    light.intensity = intensity;
+    light.range = range;
+    return light;
   }
 
   protected createGround(): void {

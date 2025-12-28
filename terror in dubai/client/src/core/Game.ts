@@ -1,8 +1,10 @@
-import { Engine, Scene, Vector3 } from '@babylonjs/core';
+import { Engine, Scene } from '@babylonjs/core';
 import { GameState } from '../types';
 import { SceneManager } from './SceneManager';
 import { InputManager } from './InputManager';
 import { AudioManager } from './AudioManager';
+import { PostProcessing } from './PostProcessing';
+import { ParticleEffects } from './ParticleEffects';
 import { PlayerController } from '../player/PlayerController';
 import { UIManager } from '../ui/UIManager';
 import { levelConfigs } from '../config/storyConfig';
@@ -14,6 +16,8 @@ export class Game {
   private sceneManager: SceneManager;
   private input: InputManager;
   private audio: AudioManager;
+  private postProcessing: PostProcessing | null = null;
+  private particleEffects: ParticleEffects | null = null;
   private player: PlayerController;
   private ui: UIManager;
 
@@ -63,7 +67,23 @@ export class Game {
 
     this.player.health.onDamage(() => {
       this.ui.hud.showDamageFlash();
+      // Trigger post-processing damage effect
+      if (this.postProcessing) {
+        this.postProcessing.triggerDamageEffect();
+      }
     });
+  }
+
+  private initializeEffects(): void {
+    // Initialize post-processing
+    if (!this.postProcessing) {
+      this.postProcessing = new PostProcessing(this.scene, this.player.camera);
+    }
+
+    // Initialize particle effects
+    if (!this.particleEffects) {
+      this.particleEffects = new ParticleEffects(this.scene);
+    }
   }
 
   private render(): void {
@@ -87,6 +107,11 @@ export class Game {
 
     // Update UI
     this.ui.update(this.player);
+
+    // Update particle effects (follow player)
+    if (this.particleEffects) {
+      this.particleEffects.updateSporesPosition(this.player.position);
+    }
 
     // Check level complete
     if (this.sceneManager.isLevelComplete()) {
@@ -170,6 +195,9 @@ export class Game {
 
     // Load level
     await this.sceneManager.loadLevel(this.currentLevelIndex);
+
+    // Initialize visual effects (after scene is ready)
+    this.initializeEffects();
 
     // Set up level-specific callbacks
     const level = this.sceneManager.getCurrentLevel();
