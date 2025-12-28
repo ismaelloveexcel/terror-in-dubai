@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#ff4444" />
+    <meta name="description" content="A 3D first-person shooter game set in a corrupted 'Upside-Down Dubai'. Save Uncle Ismael from the rift!" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon.svg" />
+    
     <title>Save Ismael</title>
     <style>
       * {
@@ -47,6 +57,27 @@
           display: flex;
         }
       }
+      /* Install prompt styles */
+      #install-prompt {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #ff4444, #cc0000);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 30px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 9999;
+        display: none;
+        box-shadow: 0 4px 20px rgba(255, 68, 68, 0.4);
+        border: none;
+        font-family: inherit;
+      }
+      #install-prompt:hover {
+        background: linear-gradient(135deg, #ff6666, #ee0000);
+      }
     </style>
   </head>
   <body>
@@ -56,7 +87,34 @@
         <div>Please rotate your device to landscape mode</div>
       </div>
     </div>
+    <button id="install-prompt">📲 Install Game</button>
     <canvas id="renderCanvas"></canvas>
     <script type="module" src="/src/main.ts"></script>
+    <script>
+      // PWA Install prompt
+      let deferredPrompt;
+      const installBtn = document.getElementById('install-prompt');
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'block';
+      });
+      
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          console.log('Install prompt outcome:', outcome);
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        }
+      });
+      
+      window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        installBtn.style.display = 'none';
+      });
+    </script>
   </body>
 </html>

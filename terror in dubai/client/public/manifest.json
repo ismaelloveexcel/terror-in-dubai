@@ -1,0 +1,29 @@
+{
+  "name": "Save Ismael - Terror in Dubai",
+  "short_name": "Save Ismael",
+  "description": "A 3D first-person shooter game set in a corrupted 'Upside-Down Dubai'. Save Uncle Ismael from the rift!",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "theme_color": "#ff4444",
+  "background_color": "#000000",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr"
+}

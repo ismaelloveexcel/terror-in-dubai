@@ -1,6 +1,6 @@
-import { AdvancedDynamicTexture, Rectangle, TextBlock, Button, Control, StackPanel } from '@babylonjs/gui';
-import { gameConfig, toggleFamilyMode, setRescueTarget } from '../config/gameConfig';
-import { getPrologueText, getFinalMessage, getFinaleSequence, creditsText } from '../config/storyConfig';
+import { AdvancedDynamicTexture, Rectangle, TextBlock, Button, Control, StackPanel, Slider } from '@babylonjs/gui';
+import { gameConfig, toggleFamilyMode, setRescueTarget, settings, updateSetting, saveSettings } from '../config/gameConfig';
+import { getPrologueText, getFinaleSequence, creditsText } from '../config/storyConfig';
 
 export class Overlays {
   private ui: AdvancedDynamicTexture;
@@ -59,45 +59,143 @@ export class Overlays {
     const title = new TextBlock('title', 'SETTINGS');
     title.fontSize = 32;
     title.color = 'white';
-    title.top = -200;
+    title.top = -250;
     bg.addControl(title);
+
+    // Create scrollable panel for settings
+    const panel = new StackPanel();
+    panel.spacing = 15;
+    panel.top = -50;
+    panel.width = '400px';
+    bg.addControl(panel);
+
+    // === AUDIO SECTION ===
+    this.addSectionHeader(panel, '🔊 AUDIO');
+    
+    // Master Volume
+    this.addSliderSetting(panel, 'Master Volume', settings.masterVolume, (value) => {
+      updateSetting('masterVolume', value);
+    });
+    
+    // Music Volume
+    this.addSliderSetting(panel, 'Music', settings.musicVolume, (value) => {
+      updateSetting('musicVolume', value);
+    });
+    
+    // SFX Volume
+    this.addSliderSetting(panel, 'Sound Effects', settings.sfxVolume, (value) => {
+      updateSetting('sfxVolume', value);
+    });
+
+    // === GRAPHICS SECTION ===
+    this.addSectionHeader(panel, '🎮 GRAPHICS');
+    
+    // Quality preset
+    const qualityBtn = Button.CreateSimpleButton('quality', `Quality: ${settings.graphicsQuality.toUpperCase()}`);
+    this.styleSmallButton(qualityBtn);
+    qualityBtn.onPointerClickObservable.add(() => {
+      const qualities: Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
+      const idx = qualities.indexOf(settings.graphicsQuality);
+      updateSetting('graphicsQuality', qualities[(idx + 1) % 3]);
+      this.showSettings(onBack);
+    });
+    panel.addControl(qualityBtn);
+
+    // Post-processing toggle
+    const ppBtn = Button.CreateSimpleButton('pp', `Post-Processing: ${settings.postProcessing ? 'ON' : 'OFF'}`);
+    this.styleSmallButton(ppBtn);
+    ppBtn.onPointerClickObservable.add(() => {
+      updateSetting('postProcessing', !settings.postProcessing);
+      this.showSettings(onBack);
+    });
+    panel.addControl(ppBtn);
+
+    // Particles toggle
+    const particlesBtn = Button.CreateSimpleButton('particles', `Particles: ${settings.particles ? 'ON' : 'OFF'}`);
+    this.styleSmallButton(particlesBtn);
+    particlesBtn.onPointerClickObservable.add(() => {
+      updateSetting('particles', !settings.particles);
+      this.showSettings(onBack);
+    });
+    panel.addControl(particlesBtn);
+
+    // === CONTROLS SECTION ===
+    this.addSectionHeader(panel, '🎯 CONTROLS');
+    
+    // Sensitivity slider
+    this.addSliderSetting(panel, 'Sensitivity', settings.sensitivity, (value) => {
+      updateSetting('sensitivity', value);
+    }, 0.1, 2.0);
+
+    // Invert Y toggle
+    const invertBtn = Button.CreateSimpleButton('invert', `Invert Y-Axis: ${settings.invertY ? 'ON' : 'OFF'}`);
+    this.styleSmallButton(invertBtn);
+    invertBtn.onPointerClickObservable.add(() => {
+      updateSetting('invertY', !settings.invertY);
+      this.showSettings(onBack);
+    });
+    panel.addControl(invertBtn);
+
+    // === DIFFICULTY SECTION ===
+    this.addSectionHeader(panel, '⚔️ DIFFICULTY');
+    
+    const diffBtn = Button.CreateSimpleButton('diff', `Difficulty: ${settings.difficulty.toUpperCase()}`);
+    this.styleSmallButton(diffBtn);
+    diffBtn.onPointerClickObservable.add(() => {
+      const diffs: Array<'easy' | 'normal' | 'hard'> = ['easy', 'normal', 'hard'];
+      const idx = diffs.indexOf(settings.difficulty);
+      updateSetting('difficulty', diffs[(idx + 1) % 3]);
+      this.showSettings(onBack);
+    });
+    panel.addControl(diffBtn);
+
+    // === GAME MODE ===
+    this.addSectionHeader(panel, '👥 GAME MODE');
 
     // Toggle Family Mode
     const familyModeBtn = Button.CreateSimpleButton('familyMode', gameConfig.familyMode ? 'Mode: FAMILY' : 'Mode: PUBLIC');
-    this.styleButton(familyModeBtn);
-    familyModeBtn.top = -50;
+    this.styleSmallButton(familyModeBtn);
     familyModeBtn.onPointerClickObservable.add(() => {
       toggleFamilyMode();
       this.showSettings(onBack);
     });
-    bg.addControl(familyModeBtn);
+    panel.addControl(familyModeBtn);
 
     // Set rescue target (if not family mode)
     if (!gameConfig.familyMode) {
-      const targetText = new TextBlock('targetLabel', 'Who will you save?');
-      targetText.fontSize = 18;
-      targetText.color = 'white';
-      targetText.top = 30;
-      bg.addControl(targetText);
-
-      const targetInput = new TextBlock('targetValue', gameConfig.rescueTarget);
-      targetInput.fontSize = 24;
-      targetInput.color = '#ffaa00';
-      targetInput.top = 70;
-      bg.addControl(targetInput);
-
-      const namePrompt = new TextBlock('nameHint', '(Enter name in console: setTarget("Name"))');
-      namePrompt.fontSize = 12;
-      namePrompt.color = '#666';
-      namePrompt.top = 110;
-      bg.addControl(namePrompt);
+      const targetText = new TextBlock('targetLabel', `Rescuing: ${gameConfig.rescueTarget}`);
+      targetText.fontSize = 14;
+      targetText.color = '#ffaa00';
+      targetText.height = '25px';
+      panel.addControl(targetText);
     }
 
+    // === ACCESSIBILITY ===
+    this.addSectionHeader(panel, '♿ ACCESSIBILITY');
+
+    const fpsBtn = Button.CreateSimpleButton('fps', `Show FPS: ${settings.showFPS ? 'ON' : 'OFF'}`);
+    this.styleSmallButton(fpsBtn);
+    fpsBtn.onPointerClickObservable.add(() => {
+      updateSetting('showFPS', !settings.showFPS);
+      this.showSettings(onBack);
+    });
+    panel.addControl(fpsBtn);
+
+    const motionBtn = Button.CreateSimpleButton('motion', `Reduced Motion: ${settings.reducedMotion ? 'ON' : 'OFF'}`);
+    this.styleSmallButton(motionBtn);
+    motionBtn.onPointerClickObservable.add(() => {
+      updateSetting('reducedMotion', !settings.reducedMotion);
+      this.showSettings(onBack);
+    });
+    panel.addControl(motionBtn);
+
+    // Back button
     const backBtn = Button.CreateSimpleButton('back', 'BACK');
     this.styleButton(backBtn);
-    backBtn.top = 180;
+    backBtn.top = 280;
     backBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
+      saveSettings();
       onBack();
     });
     bg.addControl(backBtn);
@@ -110,6 +208,79 @@ export class Overlays {
       setRescueTarget(name);
       this.showSettings(onBack);
     };
+  }
+
+  private addSectionHeader(panel: StackPanel, text: string): void {
+    const header = new TextBlock('header', text);
+    header.fontSize = 16;
+    header.color = '#ff6666';
+    header.height = '25px';
+    header.paddingTop = '10px';
+    panel.addControl(header);
+  }
+
+  private addSliderSetting(
+    panel: StackPanel, 
+    label: string, 
+    value: number, 
+    onChange: (value: number) => void,
+    min: number = 0,
+    max: number = 1
+  ): void {
+    const container = new Rectangle('sliderContainer');
+    container.width = '100%';
+    container.height = '40px';
+    container.thickness = 0;
+    container.background = 'transparent';
+    panel.addControl(container);
+
+    const labelText = new TextBlock('label', label);
+    labelText.fontSize = 14;
+    labelText.color = 'white';
+    labelText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+    labelText.left = 10;
+    container.addControl(labelText);
+
+    const valueText = new TextBlock('value', `${Math.round(value * 100)}%`);
+    valueText.fontSize = 14;
+    valueText.color = '#ffaa00';
+    valueText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+    valueText.left = -10;
+    container.addControl(valueText);
+
+    const slider = new Slider('slider');
+    slider.minimum = min;
+    slider.maximum = max;
+    slider.value = value;
+    slider.height = '20px';
+    slider.width = '150px';
+    slider.color = '#ff4444';
+    slider.background = '#333';
+    slider.thumbColor = '#ff6666';
+    slider.left = 60;
+    slider.onValueChangedObservable.add((val) => {
+      valueText.text = `${Math.round(val * 100)}%`;
+      onChange(val);
+    });
+    container.addControl(slider);
+  }
+
+  private styleSmallButton(button: Button): void {
+    button.width = '100%';
+    button.height = '35px';
+    button.color = 'white';
+    button.background = '#444';
+    button.cornerRadius = 5;
+    button.thickness = 1;
+    button.fontSize = 14;
+
+    button.onPointerEnterObservable.add(() => {
+      button.background = '#666';
+    });
+
+    button.onPointerOutObservable.add(() => {
+      button.background = '#444';
+    });
   }
 
   showPrologue(onContinue: () => void): void {

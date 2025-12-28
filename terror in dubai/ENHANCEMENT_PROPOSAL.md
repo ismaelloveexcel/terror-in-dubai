@@ -363,15 +363,16 @@ After deployment, track:
 - [x] Enhanced lighting
 - [x] Improved HUD
 
-### Phase 2 (Next Sprint)
-- [ ] Audio system implementation
-- [ ] Settings menu expansion
-- [ ] Tutorial/onboarding
+### Phase 2 (Next Sprint) ✅ DONE
+- [x] Settings menu expansion (audio, graphics, controls, difficulty, accessibility)
+- [x] Tutorial/onboarding system
+- [x] PWA support (manifest, install prompt)
+- [x] FPS counter
 
 ### Phase 3 (Future)
+- [ ] Audio system implementation (sound files needed)
 - [ ] Save/load system
 - [ ] Achievements
-- [ ] PWA support
 - [ ] Analytics integration
 
 ---
@@ -383,10 +384,15 @@ The game is now enhanced with:
 - **Dynamic particle effects** for visual feedback
 - **Improved lighting** with shadows and accent lights
 - **Modern HUD design** with better visual hierarchy
+- **Comprehensive settings menu** with audio, graphics, controls, and accessibility options
+- **Tutorial system** for first-time players
+- **PWA support** for mobile installation
+- **FPS counter** for performance monitoring
+- **Difficulty settings** (Easy/Normal/Hard)
 
 **Recommended deployment:** **Vercel** for its simplicity, performance, and free tier.
 
-**Next steps:** Implement audio feedback and tutorial system for the best player experience.
+**Next steps:** Add audio files for sound effects and music.
 
 ---
 

@@ -33,6 +33,91 @@ if (storedTarget) {
   gameConfig.rescueTarget = storedTarget;
 }
 
+// ==== SETTINGS SYSTEM ====
+export interface GameSettings {
+  // Audio
+  masterVolume: number;
+  musicVolume: number;
+  sfxVolume: number;
+  
+  // Graphics
+  graphicsQuality: 'low' | 'medium' | 'high';
+  postProcessing: boolean;
+  particles: boolean;
+  shadows: boolean;
+  
+  // Controls
+  sensitivity: number;
+  invertY: boolean;
+  
+  // Accessibility
+  showFPS: boolean;
+  reducedMotion: boolean;
+  highContrast: boolean;
+  
+  // Difficulty
+  difficulty: 'easy' | 'normal' | 'hard';
+}
+
+// Default settings
+export const defaultSettings: GameSettings = {
+  masterVolume: 0.8,
+  musicVolume: 0.6,
+  sfxVolume: 0.8,
+  graphicsQuality: 'high',
+  postProcessing: true,
+  particles: true,
+  shadows: true,
+  sensitivity: 1.0,
+  invertY: false,
+  showFPS: false,
+  reducedMotion: false,
+  highContrast: false,
+  difficulty: 'normal'
+};
+
+// Current settings (load from localStorage)
+export const settings: GameSettings = { ...defaultSettings };
+
+// Load settings from localStorage
+function loadSettings(): void {
+  const stored = localStorage.getItem('gameSettings');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      Object.assign(settings, parsed);
+    } catch (e) {
+      console.warn('Failed to load settings, using defaults');
+    }
+  }
+}
+
+// Save settings to localStorage
+export function saveSettings(): void {
+  localStorage.setItem('gameSettings', JSON.stringify(settings));
+}
+
+// Update a setting
+export function updateSetting<K extends keyof GameSettings>(key: K, value: GameSettings[K]): void {
+  settings[key] = value;
+  saveSettings();
+}
+
+// Get difficulty multipliers
+export function getDifficultyMultipliers(): { health: number; damage: number; enemyDamage: number } {
+  switch (settings.difficulty) {
+    case 'easy':
+      return { health: 1.5, damage: 1.2, enemyDamage: 0.5 };
+    case 'hard':
+      return { health: 0.75, damage: 1.0, enemyDamage: 1.5 };
+    default:
+      return { health: 1.0, damage: 1.0, enemyDamage: 1.0 };
+  }
+}
+
+// Initialize settings on load
+loadSettings();
+
 // Weapon configuration
 export const weaponConfig: WeaponConfig = {
   damage: 25,
@@ -106,8 +191,8 @@ export const playerConfig = {
 export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 export const performanceConfig = {
-  shadowsEnabled: !isMobile,
-  particleLimit: isMobile ? 50 : 200,
+  shadowsEnabled: !isMobile && settings.shadows,
+  particleLimit: isMobile ? 50 : (settings.particles ? 200 : 0),
   maxEnemies: isMobile ? 8 : 15,
   renderScale: isMobile ? 0.8 : 1.0
 };

@@ -176,7 +176,15 @@ export class Game {
   private showPrologue(): void {
     this.ui.overlays.showPrologue(() => {
       this.currentLevelIndex = 0;
-      this.setState('LEVEL_INTRO');
+      
+      // Check if this is first time - show tutorial
+      if (this.ui.shouldShowTutorial()) {
+        this.ui.startTutorial(() => {
+          this.setState('LEVEL_INTRO');
+        });
+      } else {
+        this.setState('LEVEL_INTRO');
+      }
     });
   }
 
