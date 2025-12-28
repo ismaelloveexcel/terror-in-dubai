@@ -5,10 +5,14 @@ import { InputManager } from './InputManager';
 import { AudioManager } from './AudioManager';
 import { PostProcessing } from './PostProcessing';
 import { ParticleEffects } from './ParticleEffects';
+import { saveSystem } from './SaveSystem';
+import { achievementSystem } from './AchievementSystem';
+import { analytics } from './AnalyticsSystem';
 import { PlayerController } from '../player/PlayerController';
 import { UIManager } from '../ui/UIManager';
 import { levelConfigs } from '../config/storyConfig';
 import { Level2 } from '../levels/Level2';
+import { settings } from '../config/gameConfig';
 
 export class Game {
   private engine: Engine;
@@ -24,6 +28,8 @@ export class Game {
   private gameState: GameState = 'MENU';
   private currentLevelIndex: number = 0;
   private lastTime: number = 0;
+  private levelStartTime: number = 0;
+  private levelDamageTaken: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     // Create engine
@@ -51,6 +57,9 @@ export class Game {
     this.setupPlayerCallbacks();
     this.showMainMenu();
 
+    // Track game start
+    analytics.trackGameStart();
+
     // Start render loop
     this.engine.runRenderLoop(() => this.render());
 
@@ -63,10 +72,16 @@ export class Game {
   private setupPlayerCallbacks(): void {
     this.player.health.onDeath(() => {
       this.setState('GAME_OVER');
+      saveSystem.trackDeath();
+      analytics.trackDeath(this.currentLevelIndex);
+      this.audio.playPlayerDamage();
     });
 
     this.player.health.onDamage(() => {
       this.ui.hud.showDamageFlash();
+      this.levelDamageTaken = true;
+      this.audio.playPlayerDamage();
+      
       // Trigger post-processing damage effect
       if (this.postProcessing) {
         this.postProcessing.triggerDamageEffect();
@@ -76,14 +91,17 @@ export class Game {
 
   private initializeEffects(): void {
     // Initialize post-processing
-    if (!this.postProcessing) {
+    if (!this.postProcessing && settings.postProcessing) {
       this.postProcessing = new PostProcessing(this.scene, this.player.camera);
     }
 
     // Initialize particle effects
-    if (!this.particleEffects) {
+    if (!this.particleEffects && settings.particles) {
       this.particleEffects = new ParticleEffects(this.scene);
     }
+
+    // Start ambient audio
+    this.audio.startAmbientDrone();
   }
 
   private render(): void {
@@ -200,6 +218,11 @@ export class Game {
 
     // Reset player
     this.player.health.reset();
+    this.levelDamageTaken = false;
+    this.levelStartTime = Date.now();
+
+    // Track level start
+    analytics.trackLevelStart(this.currentLevelIndex);
 
     // Load level
     await this.sceneManager.loadLevel(this.currentLevelIndex);
@@ -225,6 +248,23 @@ export class Game {
   }
 
   private onLevelComplete(): void {
+    const levelDuration = (Date.now() - this.levelStartTime) / 1000;
+    
+    // Track completion
+    analytics.trackLevelComplete(this.currentLevelIndex, levelDuration);
+    saveSystem.autoSaveProgress(this.currentLevelIndex, true);
+    
+    // Play completion sound
+    this.audio.playLevelComplete();
+    
+    // Check achievements
+    achievementSystem.unlock(`level_${this.currentLevelIndex + 1}_complete`);
+    
+    // No damage achievement
+    if (!this.levelDamageTaken) {
+      achievementSystem.unlock('no_damage_level');
+    }
+
     this.setState('LEVEL_COMPLETE');
   }
 
@@ -234,6 +274,13 @@ export class Game {
 
       if (this.currentLevelIndex >= levelConfigs.length) {
         // Game complete
+        achievementSystem.unlock('game_complete');
+        analytics.trackGameComplete(settings.difficulty, analytics.getCurrentSessionDuration() / 1000);
+        
+        if (settings.difficulty === 'hard') {
+          achievementSystem.unlock('beat_hard');
+        }
+        
         this.setState('FINALE');
       } else {
         // Next level
