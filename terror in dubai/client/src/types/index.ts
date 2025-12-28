@@ -10,7 +10,7 @@ export interface LevelConfig {
   id: string;
   title: string;
   storyCard: string;
-  ismael Messages?: string[];
+  ismaelMessages?: string[];
 }
 
 export interface EnemyType {

@@ -20,6 +20,10 @@ A Stranger Things-inspired 3D first-person shooter game set in Dubai, created as
 - ✅ Meshy.ai integration for custom 3D models
 - ✅ Fully playable with placeholder primitives (no API key required)
 
+## 🧭 Upgrade Proposal
+
+Looking for a higher-fidelity build? See **[UPGRADE_PROPOSAL.md](UPGRADE_PROPOSAL.md)** for a prioritized plan covering visual polish, UX improvements, and deployment recommendations.
+
 ---
 
 ## 📦 Installation
