@@ -60,9 +60,9 @@ export class PostProcessing {
     this.pipeline.imageProcessing.vignetteColor = new Color4(0.1, 0, 0, 1); // Red tint
     this.pipeline.imageProcessing.vignetteCameraFov = 0.9;
 
-    // Tone mapping for better dynamic range
+    // Tone mapping for better dynamic range (1 = ACES film-style tone mapping)
     this.pipeline.imageProcessing.toneMappingEnabled = true;
-    this.pipeline.imageProcessing.toneMappingType = 1; // ACES
+    this.pipeline.imageProcessing.toneMappingType = 1;
 
     // Contrast and exposure adjustments
     this.pipeline.imageProcessing.contrast = 1.2;

@@ -219,17 +219,16 @@ export class HUD {
   showDamageFlash(): void {
     this.damageFlash.alpha = 0.5;
     
-    // Animate fade out
-    let alpha = 0.5;
-    const fadeInterval = setInterval(() => {
-      alpha -= 0.05;
-      if (alpha <= 0) {
+    // Animate fade out using requestAnimationFrame for better performance
+    const fadeOut = () => {
+      if (this.damageFlash.alpha <= 0) {
         this.damageFlash.alpha = 0;
-        clearInterval(fadeInterval);
-      } else {
-        this.damageFlash.alpha = alpha;
+        return;
       }
-    }, 20);
+      this.damageFlash.alpha -= 0.05;
+      requestAnimationFrame(fadeOut);
+    };
+    requestAnimationFrame(fadeOut);
   }
 
   setVisible(visible: boolean): void {

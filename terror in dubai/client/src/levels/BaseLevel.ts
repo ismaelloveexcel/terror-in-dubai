@@ -23,8 +23,8 @@ export abstract class BaseLevel implements ILevel {
     // Enhanced lighting system
     this.createLighting();
 
-    // Fog - use numeric value (1 = EXP fog mode)
-    this.scene.fogMode = 1; // Scene.FOGMODE_EXP
+    // Fog - exponential fog mode (1 = FOGMODE_EXP for eerie atmosphere)
+    this.scene.fogMode = 1;
     this.scene.fogDensity = 0.02;
     this.scene.fogColor = new Color3(0.1, 0.05, 0.05);
 
