@@ -252,11 +252,16 @@ export class TutorialManager {
 
     this.tutorialOverlay.addControl(highlight);
 
-    // Pulse animation
+    // Pulse animation with cleanup check
     let scale = 1;
     let growing = true;
+    let animationId: number;
+    
     const animate = () => {
-      if (!this.tutorialOverlay) return;
+      // Stop animation when overlay is cleared
+      if (!this.tutorialOverlay || !highlight.isVisible) {
+        return;
+      }
       
       if (growing) {
         scale += 0.01;
@@ -269,9 +274,9 @@ export class TutorialManager {
       highlight.scaleX = scale;
       highlight.scaleY = scale;
       
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
-    animate();
+    animationId = requestAnimationFrame(animate);
   }
 
   private completeTutorial(): void {
