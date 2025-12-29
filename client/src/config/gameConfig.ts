@@ -38,7 +38,7 @@ export const gameConfig = {
 // =============================================================================
 
 export const visualConfig = {
-  // Color Palette
+  // Color Palette - Enhanced for visual impact
   colors: {
     // Primary
     shadowDark: '#0a0a12',      // Deep navy/black shadows
@@ -52,6 +52,12 @@ export const visualConfig = {
     concreteWet: '#4a4a4a',      // Floors, walls
     goldTarnished: '#8b7355',    // Corrupted luxury
     waterBlack: '#0a0a0a',       // Standing water
+    
+    // Enhanced accent colors
+    vecnaPurple: '#660066',      // Vecna's aura
+    portalViolet: '#9900ff',     // Dimensional rifts
+    memoryGold: '#ffd700',       // Memory/evidence glow
+    healthGreen: '#00ff66',      // Health pickups
   },
   
   // Atmosphere
@@ -69,28 +75,57 @@ export const visualConfig = {
     color: { r: 0.04, g: 0.04, b: 0.1 }, // Deep blue
   },
   
-  // Post-Processing
+  // Post-Processing - Enhanced for cinematic feel
   postProcess: {
     bloom: {
       enabled: true,
-      threshold: 0.6,
-      weight: 0.4,
+      threshold: 0.5,       // Lower threshold = more bloom
+      weight: 0.5,          // Stronger bloom weight
       kernel: 64,
-      scale: 0.5,
+      scale: 0.6,
     },
     vignette: {
       enabled: true,
-      weight: 1.2,
-      color: { r: 0.1, g: 0, b: 0 },
+      weight: 1.5,          // Darker edges for horror feel
+      color: { r: 0.15, g: 0, b: 0.05 }, // Slight purple tint
     },
     chromaticAberration: {
       enabled: true,
-      amount: 10,
+      amount: 15,           // More distortion for unsettling effect
     },
     grain: {
       enabled: true,
-      intensity: 0.05,
+      intensity: 0.08,      // More visible grain for film quality
     },
+    // New effects
+    depthOfField: {
+      enabled: false,       // Disable by default for performance
+      focalLength: 100,
+      fStop: 2.8,
+      focusDistance: 5,
+    },
+    sharpen: {
+      enabled: true,
+      edge: 0.3,
+      intensity: 0.2,
+    },
+  },
+  
+  // Mobile-optimized visuals
+  mobileVisuals: {
+    fog: {
+      enabled: true,
+      density: 0.012,       // Less fog for better visibility
+    },
+    bloom: {
+      enabled: true,
+      threshold: 0.7,
+      weight: 0.3,
+      kernel: 32,
+      scale: 0.4,
+    },
+    reducedParticles: true,
+    simplifiedLighting: true,
   },
 };
 
@@ -389,6 +424,40 @@ export const storyConfig = {
     6: `Aidan... if you're hearing this, you found me. Or what's left of me. I don't know how much longer I can hold on. He's taking everything. My memories. My thoughts. But I keep thinking about you. About movie nights. About the stupid jokes. About how you always steal my popcorn. He can't have those. I won't let him. If you made it this far... finish it.`,
   },
   
+  // Environmental story hints scattered in levels
+  environmentalStory: {
+    level1: [
+      'Abandoned shopping bags litter the marble floors...',
+      'The fountain water has turned black and still.',
+      'Vines pulse with an eerie bioluminescent glow.',
+    ],
+    level2: [
+      'Train announcement boards flicker with corrupted text...',
+      'Emergency lights cast long shadows down endless tunnels.',
+      'The distant rumble isn\'t a train anymore.',
+    ],
+    level3: [
+      'The glass shows two Dubais - one alive, one dead.',
+      'Something moves in the reflection that isn\'t there.',
+      'The height feels wrong, like gravity is confused.',
+    ],
+    level4: [
+      'Capsized yachts drift in water that doesn\'t ripple.',
+      'Restaurant tables still set for dinners never eaten.',
+      'The Marina\'s famous lights flicker in patterns... a warning?',
+    ],
+    level5: [
+      'The frozen fountain captures a moment of panic.',
+      'Aquarium glass cracked, but nothing escaped - nothing living.',
+      'Gift shops display souvenirs from a world that was.',
+    ],
+    level6: [
+      'The elevator shaft descends into infinite darkness.',
+      'Every floor holds echoes of Vecna\'s thousand years.',
+      'At the top, a throne made of memories waits.',
+    ],
+  },
+  
   // Vecna Dialogue
   vecnaDialogue: {
     firstContact: `Do you see it? Your world. So close. You could almost touch it. But you can't go back. Not until I let you. And I don't let anyone go.`,
@@ -401,9 +470,23 @@ export const storyConfig = {
       `Defiance. How predictable. Very well.`,
     ],
     
+    // Enhanced boss phases with more dramatic dialogue
+    phase1Taunt: [
+      `You fight like a child playing at war.`,
+      `Is this the best the mortal world can offer?`,
+      `Your uncle screamed louder than you shoot.`,
+    ],
+    
     phase2: `Show me your fears, child...`,
     phase2Fail: `What is this? These memories... they're not fear... they're not pain... what ARE you?`,
+    
     phase3: `My shadow! FINISH THIS!`,
+    phase3Rage: [
+      `IMPOSSIBLE! A mortal cannot resist me!`,
+      `The bond between you... it burns...`,
+      `Your memories are POISON!`,
+    ],
+    
     phase4: [
       `A THOUSAND YEARS I'VE EXISTED!`,
       `I'VE CONSUMED MINDS BEYOND COUNTING!`,
@@ -411,6 +494,13 @@ export const storyConfig = {
     ],
     
     defeat: `This isn't... possible... I am ETERNAL... I will return... your minds are MARKED... I'll find you... in your DREAMS...`,
+    
+    // New: Backstory hints during battle
+    backstoryHints: [
+      `I was a healer once... before they burned me...`,
+      `They called me monster... so I became one...`,
+      `Time means nothing in the dark... centuries pass like heartbeats...`,
+    ],
   },
   
   // Mind Flayer Dialogue
@@ -419,6 +509,12 @@ export const storyConfig = {
       `THE UNCLE STRUGGLED. HE FOUGHT. IT WAS... ENTERTAINING.`,
       `BUT HE BROKE. LIKE THEY ALL BREAK.`,
       `HIS MIND IS WITH MY MASTER NOW. SOON YOURS WILL JOIN IT.`,
+    ],
+    // New: Mid-battle taunts
+    midBattle: [
+      `YOUR WEAPONS ARE PRIMITIVE.`,
+      `I FEEL YOUR FEAR. DELICIOUS.`,
+      `THE TOWER CALLS TO YOU. YOU CANNOT RESIST.`,
     ],
     defeat: `YOU DELAY THE INEVITABLE. HE WAITS FOR YOU. IN THE TOWER.`,
   },
@@ -431,6 +527,13 @@ export const storyConfig = {
       `...he's at the top... the Tower... he's waiting for you...`,
       `I can walk... barely... we have to finish this... together...`,
       `He's connected to me... that's his weakness... go... I'll catch up...`,
+    ],
+    // New: Encouragement during final battle
+    encouragement: [
+      `You've got this, Aidan!`,
+      `Remember our movie nights - fight for those memories!`,
+      `He's weakening! Keep going!`,
+      `I believe in you!`,
     ],
     finalBattle: `AIDAN! He's still connected to me! His grip is weakest when he's angry! NOW!`,
     escape: `The rift. It's closing. We need to move. NOW.`,
@@ -461,6 +564,16 @@ export const storyConfig = {
       `(Sleep tight.)`,
     ],
   },
+  
+  // New: Mobile gameplay tips
+  mobileTips: [
+    'Rotate your device for the best experience',
+    'Use the left joystick to move',
+    'Tap FIRE to shoot enemies',
+    'Look for the glowing evidence items',
+    'Collect health packs to restore HP',
+    'Boss weak points glow red - aim there!',
+  ],
 };
 
 export default {

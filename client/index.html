@@ -2,10 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Save Ismael - A Stranger Things-inspired FPS across Upside-Down Dubai">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Save Ismael - A Stranger Things-inspired FPS across Upside-Down Dubai. Help Aidan rescue his uncle from Vecna!">
   <meta name="theme-color" content="#0a0a12">
+  
+  <!-- Mobile-First Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Save Ismael">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-TileColor" content="#0a0a12">
+  <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- Open Graph for sharing -->
+  <meta property="og:title" content="SAVE ISMAEL - Upside Down Dubai">
+  <meta property="og:description" content="A Stranger Things-inspired FPS game. Rescue Uncle Ismael from Vecna!">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/icons/icon-512x512.png">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SAVE ISMAEL">
+  <meta name="twitter:description" content="Fight through Upside Down Dubai to save your uncle!">
+  
   <title>SAVE ISMAEL</title>
+  
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  
   <style>
     * {
       margin: 0;
@@ -43,7 +68,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #0a0a12;
+      background: linear-gradient(135deg, #0a0a12 0%, #1a0a1a 50%, #0a0a12 100%);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -61,9 +86,24 @@
       font-size: 3rem;
       font-weight: bold;
       color: #00ffcc;
-      text-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+      text-shadow: 0 0 20px rgba(0, 255, 204, 0.5),
+                   0 0 40px rgba(0, 255, 204, 0.3),
+                   0 0 60px rgba(0, 255, 204, 0.2);
       margin-bottom: 2rem;
       letter-spacing: 0.5rem;
+      animation: titleGlow 2s ease-in-out infinite;
+    }
+    
+    @keyframes titleGlow {
+      0%, 100% { text-shadow: 0 0 20px rgba(0, 255, 204, 0.5); }
+      50% { text-shadow: 0 0 30px rgba(0, 255, 204, 0.8), 0 0 60px rgba(0, 255, 204, 0.4); }
+    }
+    
+    .loading-subtitle {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-bottom: 2rem;
+      letter-spacing: 0.2rem;
     }
     
     .loading-bar-container {
@@ -72,6 +112,7 @@
       background: rgba(255, 255, 255, 0.1);
       border-radius: 2px;
       overflow: hidden;
+      position: relative;
     }
     
     .loading-bar {
@@ -79,12 +120,58 @@
       width: 0%;
       background: linear-gradient(90deg, #00ffcc, #39ff14);
       transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
     }
     
     .loading-text {
       color: rgba(255, 255, 255, 0.6);
       margin-top: 1rem;
       font-size: 0.9rem;
+    }
+    
+    .loading-tip {
+      position: absolute;
+      bottom: 50px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+    
+    /* Rotate device warning for portrait mode */
+    .rotate-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 10000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #00ffcc;
+      text-align: center;
+    }
+    
+    .rotate-warning .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      animation: rotatePhone 2s ease-in-out infinite;
+    }
+    
+    @keyframes rotatePhone {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(45deg); }
+      50% { transform: rotate(90deg); }
+      75% { transform: rotate(45deg); }
+    }
+    
+    /* Show rotate warning on mobile portrait */
+    @media (max-width: 768px) and (orientation: portrait) {
+      .rotate-warning {
+        display: flex;
+      }
     }
     
     @media (max-width: 768px) {
@@ -96,6 +183,22 @@
       .loading-bar-container {
         width: 250px;
       }
+      
+      .loading-tip {
+        padding: 0 20px;
+        text-align: center;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .loading-title {
+        font-size: 1.5rem;
+        letter-spacing: 0.2rem;
+      }
+      
+      .loading-bar-container {
+        width: 200px;
+      }
     }
   </style>
 </head>
@@ -104,10 +207,19 @@
     <canvas id="renderCanvas"></canvas>
     <div id="loadingScreen">
       <div class="loading-title">SAVE ISMAEL</div>
+      <div class="loading-subtitle">An Upside Down Dubai Adventure</div>
       <div class="loading-bar-container">
         <div class="loading-bar" id="loadingBar"></div>
       </div>
       <div class="loading-text" id="loadingText">Initializing...</div>
+      <div class="loading-tip" id="loadingTip">Tip: Use headphones for the best experience</div>
+    </div>
+    
+    <!-- Rotate device warning -->
+    <div class="rotate-warning">
+      <div class="icon">📱</div>
+      <h2>Rotate Your Device</h2>
+      <p>For the best experience, please rotate to landscape mode</p>
     </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
