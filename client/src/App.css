@@ -356,6 +356,31 @@ body {
     display: block;
 }
 
+#pause-btn {
+    position: absolute;
+    top: -140px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.1s ease;
+}
+
+#pause-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 0, 0, 0.7);
+}
+
 #joystick-zone {
     position: absolute;
     left: 20px;
@@ -443,6 +468,14 @@ body {
     #joystick-zone::after {
         width: 40px;
         height: 40px;
+    }
+    
+    #pause-btn {
+        width: 44px;
+        height: 44px;
+        top: -120px;
+        right: 15px;
+        font-size: 18px;
     }
     
     #fire-btn {
