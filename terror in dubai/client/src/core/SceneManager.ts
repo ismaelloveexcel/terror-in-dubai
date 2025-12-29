@@ -1,7 +1,6 @@
 import { Scene, Engine, Vector3 } from '@babylonjs/core';
 import { ILevel } from '../types';
 import { PlayerController } from '../player/PlayerController';
-import { InputManager } from './InputManager';
 import { Level1 } from '../levels/Level1';
 import { Level2 } from '../levels/Level2';
 import { Level3 } from '../levels/Level3';
@@ -11,7 +10,7 @@ export class SceneManager {
   private currentLevel: ILevel | null = null;
   private currentLevelIndex: number = -1;
 
-  constructor(private engine: Engine, private player: PlayerController, private input: InputManager) {
+  constructor(engine: Engine, private player: PlayerController) {
     this.scene = new Scene(engine);
     this.scene.collisionsEnabled = true;
     this.scene.gravity = new Vector3(0, -9.81, 0);
@@ -43,7 +42,7 @@ export class SceneManager {
       case 1:
         const level2 = new Level2(this.scene, this.player);
         // Set lights wall callback
-        level2.setLightsWallCallback((text) => {
+        level2.setLightsWallCallback(() => {
           // This will be called from Game.ts via callback
         });
         this.currentLevel = level2;

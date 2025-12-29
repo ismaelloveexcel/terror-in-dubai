@@ -1,4 +1,4 @@
-import { Scene, Mesh, Vector3, Sound, AbstractMesh } from '@babylonjs/core';
+import { Scene, Mesh, Vector3 } from '@babylonjs/core';
 
 export interface GameConfig {
   familyMode: boolean;
@@ -10,7 +10,7 @@ export interface LevelConfig {
   id: string;
   title: string;
   storyCard: string;
-  ismael Messages?: string[];
+  ismaelMessages?: string[];
 }
 
 export interface EnemyType {

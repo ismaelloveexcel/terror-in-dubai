@@ -1,4 +1,4 @@
-import { Scene, MeshBuilder, StandardMaterial, Color3, HemisphericLight, Vector3, FogMode } from '@babylonjs/core';
+import { Scene, MeshBuilder, StandardMaterial, Color3, HemisphericLight, Vector3 } from '@babylonjs/core';
 import { ILevel, IEnemy, MemoryFragment } from '../types';
 import { AssetLoader } from '../utils/AssetLoader';
 import { PlayerController } from '../player/PlayerController';
@@ -24,7 +24,7 @@ export abstract class BaseLevel implements ILevel {
     light.diffuse = new Color3(0.5, 0.3, 0.3);
 
     // Fog
-    this.scene.fogMode = FogMode.FOGMODE_EXP;
+    this.scene.fogMode = Scene.FOGMODE_EXP;
     this.scene.fogDensity = 0.02;
     this.scene.fogColor = new Color3(0.1, 0.05, 0.05);
 

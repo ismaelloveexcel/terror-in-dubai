@@ -12,7 +12,6 @@ export class Level3 extends BaseLevel {
   private runesPillars: Mesh[] = [];
   private activeRune: Mesh | null = null;
   private psychicStunTimer: number = 0;
-  private isPlayerStunned: boolean = false;
   private stunWindowActive: boolean = false;
 
   private arenaCenter: Vector3 = new Vector3(0, 0, 0);
@@ -172,7 +171,7 @@ export class Level3 extends BaseLevel {
 
     // Phase 2: Minion spawning
     if (this.boss.currentPhase === 2) {
-      this.updatePhase2(deltaTime);
+      this.updatePhase2();
     }
 
     // Phase 3: Hazard zones
@@ -204,7 +203,6 @@ export class Level3 extends BaseLevel {
   private triggerPsychicStun(): void {
     console.log('Boss is channeling psychic stun! Shoot a rune pillar!');
     this.stunWindowActive = true;
-    this.isPlayerStunned = false;
 
     // Activate random rune
     const randomRune = this.runesPillars[Math.floor(Math.random() * this.runesPillars.length)];
@@ -251,14 +249,13 @@ export class Level3 extends BaseLevel {
 
   private playerStunned(): void {
     console.log('Player stunned!');
-    this.isPlayerStunned = true;
     this.stunWindowActive = false;
     this.activeRune = null;
 
     this.player.health.setMoveSpeedMultiplier(0, 2000); // Freeze for 2 seconds
   }
 
-  private updatePhase2(deltaTime: number): void {
+  private updatePhase2(): void {
     // Spawn minions periodically
     if (Math.random() < 0.005 && this.enemies.length < 5) {
       this.spawnMinion();

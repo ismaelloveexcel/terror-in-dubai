@@ -1,4 +1,3 @@
-import { Scene } from '@babylonjs/core';
 import { InputManager } from '../core/InputManager';
 import { PlayerController } from '../player/PlayerController';
 import { MobileControls } from './MobileControls';
@@ -11,8 +10,8 @@ export class UIManager {
   public hud: HUD;
   public overlays: Overlays;
 
-  constructor(private scene: Scene, private input: InputManager) {
-    this.mobileControls = new MobileControls(scene, input);
+  constructor(input: InputManager) {
+    this.mobileControls = new MobileControls(input);
     this.hud = new HUD();
     this.overlays = new Overlays();
   }

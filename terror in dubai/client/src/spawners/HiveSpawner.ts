@@ -3,7 +3,6 @@ import { ISpawner, IEnemy } from '../types';
 import { AssetLoader } from '../utils/AssetLoader';
 import { SwarmEnemy } from '../enemies/SwarmEnemy';
 import { FlyingEnemy } from '../enemies/FlyingEnemy';
-import { assetConfig } from '../config/assetConfig';
 import { performanceConfig } from '../config/gameConfig';
 
 export class HiveSpawner implements ISpawner {

@@ -32,6 +32,7 @@ export class BossSpawner implements ISpawner {
   }
 
   update(deltaTime: number): void {
+    void deltaTime;
     // Boss updates itself
   }
 

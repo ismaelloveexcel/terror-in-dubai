@@ -1,4 +1,4 @@
-import { Scene, Ray, Vector3, Color3, StandardMaterial } from '@babylonjs/core';
+import { Ray, Vector3, Color3, StandardMaterial } from '@babylonjs/core';
 import { weaponConfig } from '../config/gameConfig';
 import { IEnemy } from '../types';
 
@@ -7,7 +7,7 @@ export class WeaponSystem {
   private onFireCallback: (() => void) | null = null;
   private onHitCallback: ((enemy: IEnemy, damage: number) => void) | null = null;
 
-  constructor(private scene: Scene) {}
+  constructor() {}
 
   canFire(): boolean {
     const now = performance.now() / 1000;

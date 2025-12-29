@@ -44,7 +44,8 @@ export class InputManager {
       }
 
       // Request pointer lock on first click
-      if (!this.isPointerLocked && document.pointerLockElement !== canvas) {
+      const pointerLockElement = document.pointerLockElement as HTMLCanvasElement | null;
+      if (!this.isPointerLocked && pointerLockElement !== canvas) {
         canvas.requestPointerLock();
       }
     });
@@ -68,7 +69,8 @@ export class InputManager {
     if (!canvas) return;
 
     document.addEventListener('pointerlockchange', () => {
-      this.isPointerLocked = document.pointerLockElement === canvas;
+      const pointerLockElement = document.pointerLockElement as HTMLCanvasElement | null;
+      this.isPointerLocked = pointerLockElement === canvas;
     });
 
     document.addEventListener('pointerlockerror', () => {

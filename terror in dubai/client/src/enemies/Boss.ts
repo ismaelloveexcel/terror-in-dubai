@@ -1,6 +1,6 @@
-import { Mesh, Vector3, Color3, Scene, MeshBuilder, StandardMaterial, ParticleSystem, Texture } from '@babylonjs/core';
+import { Mesh, Vector3, Color3, Scene, MeshBuilder, StandardMaterial } from '@babylonjs/core';
 import { Enemy } from './Enemy';
-import { enemyConfigs, ENEMY_TYPES, performanceConfig } from '../config/gameConfig';
+import { enemyConfigs, ENEMY_TYPES } from '../config/gameConfig';
 
 export type BossPhase = 1 | 2 | 3;
 
@@ -11,7 +11,6 @@ export class Boss extends Enemy {
   public currentPhase: BossPhase = 1;
   public isStunned: boolean = false;
   private stunTimer: number = 0;
-  private phaseChangeTimer: number = 0;
 
   private teleportPoints: Vector3[] = [];
   private teleportTimer: number = 0;

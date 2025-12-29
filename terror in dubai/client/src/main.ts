@@ -2,14 +2,14 @@ import { Game } from './core/Game';
 
 // Wait for DOM to be ready
 window.addEventListener('DOMContentLoaded', () => {
-  const canvas = document.getElementById('renderCanvas') as HTMLCanvasElement;
+  const canvas = document.getElementById('renderCanvas');
 
-  if (!canvas) {
+  if (!(canvas instanceof HTMLCanvasElement)) {
     throw new Error('Canvas not found');
   }
 
   // Create game
-  const game = new Game(canvas);
+  new Game(canvas);
 
   console.log('🎮 Save Ismael - Game Loaded');
   console.log('📱 Mobile controls: Virtual joystick (left) + Fire button (right)');

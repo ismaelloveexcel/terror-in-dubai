@@ -1,4 +1,4 @@
-import { Scene, SceneLoader, AbstractMesh, Mesh, Vector3, MeshBuilder } from '@babylonjs/core';
+import { Scene, SceneLoader, Mesh, MeshBuilder } from '@babylonjs/core';
 import '@babylonjs/loaders/glTF';
 import { hasAsset, getAssetUrl } from '../config/assetConfig';
 

@@ -1,6 +1,6 @@
 import { AdvancedDynamicTexture, Rectangle, TextBlock, Button, Control, StackPanel } from '@babylonjs/gui';
 import { gameConfig, toggleFamilyMode, setRescueTarget } from '../config/gameConfig';
-import { getPrologueText, getFinalMessage, getFinaleSequence, creditsText } from '../config/storyConfig';
+import { getPrologueText, getFinaleSequence, creditsText } from '../config/storyConfig';
 
 export class Overlays {
   private ui: AdvancedDynamicTexture;
@@ -16,22 +16,22 @@ export class Overlays {
     const bg = this.createBackground();
 
     const title = new TextBlock('title', gameConfig.familyMode ? 'SAVE ISMAEL' : 'SAVE [THEM]');
-    title.fontSize = 48;
+    title.fontSize = this.scaled(48);
     title.color = '#ff4444';
-    title.top = -150;
+    title.top = -this.scaled(140);
     bg.addControl(title);
 
     if (gameConfig.familyMode) {
       const subtitle = new TextBlock('subtitle', 'Private family build');
-      subtitle.fontSize = 16;
+      subtitle.fontSize = this.scaled(16);
       subtitle.color = '#888';
-      subtitle.top = -100;
+      subtitle.top = -this.scaled(90);
       bg.addControl(subtitle);
     }
 
     const startBtn = Button.CreateSimpleButton('start', 'START GAME');
     this.styleButton(startBtn);
-    startBtn.top = 0;
+    startBtn.top = this.scaled(0);
     startBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onStart();
@@ -40,7 +40,7 @@ export class Overlays {
 
     const settingsBtn = Button.CreateSimpleButton('settings', 'SETTINGS');
     this.styleButton(settingsBtn);
-    settingsBtn.top = 80;
+    settingsBtn.top = this.scaled(80);
     settingsBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onSettings();
@@ -57,15 +57,15 @@ export class Overlays {
     const bg = this.createBackground();
 
     const title = new TextBlock('title', 'SETTINGS');
-    title.fontSize = 32;
+    title.fontSize = this.scaled(32);
     title.color = 'white';
-    title.top = -200;
+    title.top = -this.scaled(180);
     bg.addControl(title);
 
     // Toggle Family Mode
     const familyModeBtn = Button.CreateSimpleButton('familyMode', gameConfig.familyMode ? 'Mode: FAMILY' : 'Mode: PUBLIC');
     this.styleButton(familyModeBtn);
-    familyModeBtn.top = -50;
+    familyModeBtn.top = -this.scaled(50);
     familyModeBtn.onPointerClickObservable.add(() => {
       toggleFamilyMode();
       this.showSettings(onBack);
@@ -75,27 +75,27 @@ export class Overlays {
     // Set rescue target (if not family mode)
     if (!gameConfig.familyMode) {
       const targetText = new TextBlock('targetLabel', 'Who will you save?');
-      targetText.fontSize = 18;
+      targetText.fontSize = this.scaled(18);
       targetText.color = 'white';
-      targetText.top = 30;
+      targetText.top = this.scaled(30);
       bg.addControl(targetText);
 
       const targetInput = new TextBlock('targetValue', gameConfig.rescueTarget);
-      targetInput.fontSize = 24;
+      targetInput.fontSize = this.scaled(24);
       targetInput.color = '#ffaa00';
-      targetInput.top = 70;
+      targetInput.top = this.scaled(70);
       bg.addControl(targetInput);
 
       const namePrompt = new TextBlock('nameHint', '(Enter name in console: setTarget("Name"))');
-      namePrompt.fontSize = 12;
+      namePrompt.fontSize = Math.max(10, this.scaled(12));
       namePrompt.color = '#666';
-      namePrompt.top = 110;
+      namePrompt.top = this.scaled(110);
       bg.addControl(namePrompt);
     }
 
     const backBtn = Button.CreateSimpleButton('back', 'BACK');
     this.styleButton(backBtn);
-    backBtn.top = 180;
+    backBtn.top = this.scaled(180);
     backBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onBack();
@@ -118,21 +118,22 @@ export class Overlays {
     const bg = this.createBackground();
 
     const panel = new StackPanel();
-    panel.spacing = 20;
+    panel.spacing = this.scaled(20);
     bg.addControl(panel);
 
     getPrologueText().forEach(line => {
       const text = new TextBlock('', line);
-      text.fontSize = 20;
+      text.fontSize = this.scaled(20);
       text.color = 'white';
-      text.height = '30px';
+      text.height = `${this.scaled(32)}px`;
       text.textWrapping = true;
+      text.width = '90%';
       panel.addControl(text);
     });
 
     const continueBtn = Button.CreateSimpleButton('continue', 'CONTINUE');
     this.styleButton(continueBtn);
-    continueBtn.top = 200;
+    continueBtn.top = this.scaled(200);
     continueBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onContinue();
@@ -149,22 +150,22 @@ export class Overlays {
     const bg = this.createBackground();
 
     const titleText = new TextBlock('levelTitle', title.toUpperCase());
-    titleText.fontSize = 36;
+    titleText.fontSize = this.scaled(36);
     titleText.color = '#ff6666';
-    titleText.top = -100;
+    titleText.top = -this.scaled(100);
     bg.addControl(titleText);
 
     const story = new TextBlock('story', storyCard);
-    story.fontSize = 18;
+    story.fontSize = this.scaled(18);
     story.color = 'white';
-    story.width = '600px';
+    story.width = '90%';
     story.textWrapping = true;
-    story.top = 0;
+    story.top = this.scaled(0);
     bg.addControl(story);
 
     const continueBtn = Button.CreateSimpleButton('continue', 'CONTINUE');
     this.styleButton(continueBtn);
-    continueBtn.top = 150;
+    continueBtn.top = this.scaled(150);
     continueBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onContinue();
@@ -181,14 +182,14 @@ export class Overlays {
     const bg = this.createBackground();
 
     const text = new TextBlock('complete', 'LEVEL CLEARED');
-    text.fontSize = 42;
+    text.fontSize = this.scaled(42);
     text.color = '#00ff00';
-    text.top = -50;
+    text.top = -this.scaled(50);
     bg.addControl(text);
 
     const continueBtn = Button.CreateSimpleButton('continue', 'CONTINUE');
     this.styleButton(continueBtn);
-    continueBtn.top = 50;
+    continueBtn.top = this.scaled(50);
     continueBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onContinue();
@@ -205,14 +206,14 @@ export class Overlays {
     const bg = this.createBackground();
 
     const text = new TextBlock('gameOver', 'GAME OVER');
-    text.fontSize = 48;
+    text.fontSize = this.scaled(48);
     text.color = '#ff0000';
-    text.top = -50;
+    text.top = -this.scaled(50);
     bg.addControl(text);
 
     const restartBtn = Button.CreateSimpleButton('restart', 'RESTART LEVEL');
     this.styleButton(restartBtn);
-    restartBtn.top = 50;
+    restartBtn.top = this.scaled(60);
     restartBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onRestart();
@@ -229,21 +230,22 @@ export class Overlays {
     const bg = this.createBackground();
 
     const panel = new StackPanel();
-    panel.spacing = 25;
+    panel.spacing = this.scaled(25);
     bg.addControl(panel);
 
     getFinaleSequence().forEach(line => {
       const text = new TextBlock('', line);
-      text.fontSize = 18;
+      text.fontSize = this.scaled(18);
       text.color = 'white';
-      text.height = '25px';
+      text.height = `${this.scaled(26)}px`;
       text.textWrapping = true;
+      text.width = '92%';
       panel.addControl(text);
     });
 
     const continueBtn = Button.CreateSimpleButton('continue', 'CONTINUE');
     this.styleButton(continueBtn);
-    continueBtn.top = 220;
+    continueBtn.top = this.scaled(220);
     continueBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onContinue();
@@ -260,20 +262,21 @@ export class Overlays {
     const bg = this.createBackground();
 
     const panel = new StackPanel();
-    panel.spacing = 15;
+    panel.spacing = this.scaled(15);
     bg.addControl(panel);
 
     creditsText.forEach(line => {
       const text = new TextBlock('', line);
-      text.fontSize = line === '' ? 10 : (line.length < 20 ? 24 : 16);
+      const baseSize = line === '' ? 10 : (line.length < 20 ? 24 : 16);
+      text.fontSize = Math.max(10, this.scaled(baseSize));
       text.color = line.includes(gameConfig.nephewName) ? '#ffaa00' : 'white';
-      text.height = '20px';
+      text.height = `${this.scaled(20)}px`;
       panel.addControl(text);
     });
 
     const finishBtn = Button.CreateSimpleButton('finish', 'MAIN MENU');
     this.styleButton(finishBtn);
-    finishBtn.top = 250;
+    finishBtn.top = this.scaled(250);
     finishBtn.onPointerClickObservable.add(() => {
       this.playButtonSound();
       onFinish();
@@ -286,20 +289,21 @@ export class Overlays {
 
   showIsmaelMessage(message: string, duration: number = 3000): void {
     const box = new Rectangle('ismaelBox');
-    box.width = '500px';
-    box.height = '80px';
+    box.width = '90%';
+    box.height = `${this.scaled(90)}px`;
     box.cornerRadius = 10;
     box.color = 'white';
-    box.thickness = 2;
+    box.thickness = Math.max(1, this.scaled(2));
     box.background = 'rgba(0, 0, 0, 0.8)';
     box.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-    box.top = 80;
+    box.top = this.scaled(80);
     this.ui.addControl(box);
 
     const text = new TextBlock('ismaelText', message);
-    text.fontSize = 16;
+    text.fontSize = this.scaled(16);
     text.color = '#ffaa00';
     text.textWrapping = true;
+    text.width = '95%';
     box.addControl(text);
 
     setTimeout(() => {
@@ -315,7 +319,7 @@ export class Overlays {
     this.ui.addControl(wall);
 
     const letters = new TextBlock('letters', text);
-    letters.fontSize = 60;
+    letters.fontSize = Math.max(32, this.scaled(60));
     letters.color = '#ff0000';
     letters.fontStyle = 'bold';
     wall.addControl(letters);
@@ -333,23 +337,38 @@ export class Overlays {
     }, duration);
   }
 
+  private getScale(): number {
+    const minDimension = Math.min(window.innerWidth, window.innerHeight);
+    return Math.min(1, Math.max(0.75, minDimension / 900));
+  }
+
+  private scaled(value: number): number {
+    return Math.round(value * this.getScale());
+  }
+
   private createBackground(): Rectangle {
     const bg = new Rectangle('overlayBg');
     bg.width = '100%';
     bg.height = '100%';
     bg.background = 'rgba(0, 0, 0, 0.95)';
     bg.thickness = 0;
+    const padding = this.scaled(24);
+    bg.paddingLeft = `${padding}px`;
+    bg.paddingRight = `${padding}px`;
+    bg.paddingTop = `${padding}px`;
+    bg.paddingBottom = `${padding}px`;
     return bg;
   }
 
   private styleButton(button: Button): void {
-    button.width = '250px';
-    button.height = '50px';
+    const scale = this.getScale();
+    button.width = `${Math.round(260 * scale)}px`;
+    button.height = `${Math.round(54 * scale)}px`;
     button.color = 'white';
     button.background = '#333';
-    button.cornerRadius = 5;
-    button.thickness = 2;
-    button.fontSize = 18;
+    button.cornerRadius = Math.round(5 * scale);
+    button.thickness = Math.max(1, Math.round(2 * scale));
+    button.fontSize = Math.round(18 * scale);
 
     button.onPointerEnterObservable.add(() => {
       button.background = '#666';

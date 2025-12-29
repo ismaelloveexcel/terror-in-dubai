@@ -1,4 +1,4 @@
-import { Engine, Scene, Vector3 } from '@babylonjs/core';
+import { Engine, Scene } from '@babylonjs/core';
 import { GameState } from '../types';
 import { SceneManager } from './SceneManager';
 import { InputManager } from './InputManager';
@@ -37,10 +37,10 @@ export class Game {
     this.player = new PlayerController(this.scene, this.input);
 
     // UI
-    this.ui = new UIManager(this.scene, this.input);
+    this.ui = new UIManager(this.input);
 
     // Scene manager
-    this.sceneManager = new SceneManager(this.engine, this.player, this.input);
+    this.sceneManager = new SceneManager(this.engine, this.player);
     this.scene = this.sceneManager.getScene();
 
     // Setup

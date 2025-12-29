@@ -2,14 +2,12 @@ import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, Mesh } from '@ba
 import { BaseLevel } from './BaseLevel';
 import { PlayerController } from '../player/PlayerController';
 import { AnchorSpawner } from '../spawners/AnchorSpawner';
-import { SwarmEnemy } from '../enemies/SwarmEnemy';
-import { IEnemy, ISpawner } from '../types';
+import { ISpawner } from '../types';
 import { memoryFragments, lightsWallMessages } from '../config/storyConfig';
 
 export class Level2 extends BaseLevel {
   private anchors: ISpawner[] = [];
   private interferenceTimer: number = 0;
-  private interferenceActive: boolean = false;
   private lightsWallIndex: number = 0;
   private lightsWallCallback: ((text: string) => void) | null = null;
 
@@ -121,6 +119,8 @@ export class Level2 extends BaseLevel {
   private updateInterference(deltaTime: number, anchorCount: number): void {
     this.interferenceTimer += deltaTime;
 
+    const moveDragInterval = Math.max(10, 20 - anchorCount * 2);
+
     // Interference pulse every 15 seconds
     if (this.interferenceTimer > 15) {
       this.triggerInterferencePulse();
@@ -141,7 +141,7 @@ export class Level2 extends BaseLevel {
 
     // Movement drag pulse
     this.moveDragTimer += deltaTime;
-    if (this.moveDragTimer > 20) {
+    if (this.moveDragTimer > moveDragInterval) {
       this.applyMoveDrag();
       this.moveDragTimer = 0;
     }

@@ -13,12 +13,16 @@ A Stranger Things-inspired 3D first-person shooter game set in Dubai, created as
 
 ### Features
 - ✅ Full 3D FPS gameplay with Babylon.js
-- ✅ Mobile-optimized (virtual joystick + fire button)
+- ✅ Mobile-first HUD (responsive joystick + fire button that scale to your viewport)
 - ✅ Desktop controls (WASD + mouse)
 - ✅ Two modes: **Family Mode** (private) and **Public Mode** (customizable)
 - ✅ Story-driven levels with collectible memory fragments
 - ✅ Meshy.ai integration for custom 3D models
 - ✅ Fully playable with placeholder primitives (no API key required)
+
+## 🧭 Upgrade Proposal
+
+Looking for a higher-fidelity build? See **[UPGRADE_PROPOSAL.md](UPGRADE_PROPOSAL.md)** for a prioritized plan covering visual polish, UX improvements, and deployment recommendations.
 
 ---
 
@@ -66,6 +70,10 @@ Open http://localhost:5173 in your browser.
    npm run build
    npm start
    ```
+
+### Manus Deployment
+
+If you're deploying to Manus, see **[DEPLOYMENT_MANUS.md](DEPLOYMENT_MANUS.md)** for the build commands, environment variables, and publish directory to use.
 
 ---
 

@@ -11,7 +11,6 @@ export class PlayerController {
   public weapon: WeaponSystem;
   public position: Vector3;
 
-  private velocity: Vector3 = Vector3.Zero();
   private isSprinting: boolean = false;
   private collider: Mesh;
 
@@ -42,14 +41,14 @@ export class PlayerController {
 
     // Systems
     this.health = new HealthSystem();
-    this.weapon = new WeaponSystem(this.scene);
+    this.weapon = new WeaponSystem();
   }
 
   update(deltaTime: number, enemies: IEnemy[]): void {
     if (!this.health.state.isAlive || !this.health.state.canMove) return;
 
     this.handleMovement(deltaTime);
-    this.handleLook(deltaTime);
+    this.handleLook();
     this.handleShooting(enemies);
 
     // Sync camera with collider
@@ -97,7 +96,7 @@ export class PlayerController {
     }
   }
 
-  private handleLook(deltaTime: number): void {
+  private handleLook(): void {
     if (this.input.isPointerLocked) {
       const sensitivity = 0.002;
 
