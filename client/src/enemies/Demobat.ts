@@ -4,7 +4,8 @@
 import { Scene, Vector3, Mesh } from '@babylonjs/core';
 import { Enemy } from './Enemy';
 import { EnemyType } from '../types';
-import { fallbackMeshes, enemyConfig } from '../config/assetConfig';
+import { fallbackMeshes } from '../config/assetConfig';
+import { enemyConfig } from '../config/gameConfig';
 
 export class Demobat extends Enemy {
   private flyHeight: number;
