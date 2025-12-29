@@ -14,9 +14,16 @@ import {
   Color4,
 } from '@babylonjs/core';
 import { weaponConfig } from '../config/gameConfig';
-import { IWeapon } from '../types';
 
-interface WeaponState extends IWeapon {
+interface WeaponState {
+  name: string;
+  damage: number;
+  fireRate: number;
+  range: number;
+  magazineSize: number;
+  currentAmmo: number;
+  totalAmmo: number;
+  isReloading: boolean;
   lastFireTime: number;
   reloadStartTime: number;
 }
@@ -113,8 +120,9 @@ export class WeaponSystem {
     
     // Position at barrel tip
     if (this.weaponMesh) {
-      this.muzzleFlash.emitter = new Vector3(0, 0, 0.15);
-      this.muzzleFlash.parent = this.weaponMesh;
+      this.muzzleFlash.emitter = this.weaponMesh;
+      this.muzzleFlash.minEmitBox = new Vector3(0, 0, 0.15);
+      this.muzzleFlash.maxEmitBox = new Vector3(0, 0, 0.15);
     }
     
     // Particle settings
@@ -285,7 +293,7 @@ export class WeaponSystem {
   // GETTERS
   // ===========================================================================
   
-  public getCurrentWeapon(): IWeapon {
+  public getCurrentWeapon(): WeaponState {
     return { ...this.currentWeapon };
   }
   

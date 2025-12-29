@@ -162,7 +162,7 @@ export class InputManager {
   
   private setupPointerLock(): void {
     document.addEventListener('pointerlockchange', () => {
-      this.isPointerLocked = document.pointerLockElement === this.canvas;
+      this.isPointerLocked = document.pointerLockElement === (this.canvas as unknown as Element);
     });
     
     document.addEventListener('pointerlockerror', () => {

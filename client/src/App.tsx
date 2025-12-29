@@ -177,17 +177,9 @@ const App: React.FC = () => {
         if (!canvasRef.current) return;
         
         const canvas = canvasRef.current;
-        const engine = new Engine(canvas, true, {
-            preserveDrawingBuffer: true,
-            stencil: true,
-            antialias: true
-        });
         
-        engineRef.current = engine;
-        
-        // Create scene and game
-        const scene = new Scene(engine);
-        const game = new Game(scene, canvas);
+        // Create game (Game creates its own engine and scene)
+        const game = new Game(canvas);
         gameRef.current = game;
         
         // Check for save data
@@ -203,21 +195,13 @@ const App: React.FC = () => {
             setLoadingMessage('Failed to load game');
         });
         
-        // Render loop
-        engine.runRenderLoop(() => {
-            if (gameState === 'playing') {
-                scene.render();
-            }
-        });
-        
         // Resize handler
         window.addEventListener('resize', () => {
-            engine.resize();
+            // Game handles its own resize
         });
         
         return () => {
             game.dispose();
-            engine.dispose();
         };
     }, []);
     

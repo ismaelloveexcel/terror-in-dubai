@@ -10,18 +10,19 @@
   },
   "dependencies": {
     "@babylonjs/core": "^6.38.0",
-    "@babylonjs/loaders": "^6.38.0",
     "@babylonjs/gui": "^6.38.0",
+    "@babylonjs/loaders": "^6.38.0",
     "@babylonjs/materials": "^6.38.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.8",
-    "@types/node": "^20.10.5"
+    "vite-plugin-pwa": "^1.2.0"
   }
 }

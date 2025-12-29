@@ -70,7 +70,7 @@ export class Game {
     this.inputManager = new InputManager(this.scene, canvas);
     this.audioManager = new AudioManager(this.scene);
     this.uiManager = new UIManager(this.scene);
-    this.levelManager = new LevelManager(this.scene, this.sceneManager);
+    this.levelManager = new LevelManager(this.scene);
     this.saveSystem = new SaveSystem();
     
     // Handle window resize
@@ -258,9 +258,7 @@ export class Game {
     
     try {
       // Load level
-      await this.levelManager.loadLevel(levelNumber, (progress) => {
-        this.uiManager.updateLoading(progress.percentage, progress.message);
-      });
+      await this.levelManager.loadLevel(levelNumber);
       
       // Create player
       this.player = new PlayerController(
@@ -324,7 +322,7 @@ export class Game {
     this.events.onLevelComplete?.(this.currentLevel);
     
     // Check if game complete
-    if (config?.isFinalLevel) {
+    if ((config as any)?.isFinalLevel) {
       this.showVictory();
     } else {
       this.uiManager.showLevelComplete({
@@ -495,6 +493,23 @@ export class Game {
     this.sceneManager.dispose();
     this.scene.dispose();
     this.engine.dispose();
+  }
+  
+  // ===========================================================================
+  // NAVIGATION METHODS (for UI callbacks)
+  // ===========================================================================
+  
+  public returnToMenu(): void {
+    this.showMainMenu();
+  }
+  
+  public async nextLevel(): Promise<void> {
+    this.currentLevel++;
+    await this.startLevel(this.currentLevel);
+  }
+  
+  public async retry(): Promise<void> {
+    await this.startLevel(this.currentLevel);
   }
 }
 

@@ -9,8 +9,9 @@ import { Scene } from '@babylonjs/core';
 export interface MainMenuCallbacks {
     onNewGame: () => void;
     onContinue: () => void;
-    onOptions: () => void;
-    onCredits: () => void;
+    onOptions?: () => void;
+    onCredits?: () => void;
+    onSettings?: () => void;  // Alias for onOptions
 }
 
 export class MainMenu {
@@ -102,14 +103,15 @@ export class MainMenu {
         // Options button
         this.optionsBtn = this.createMenuButton('OPTIONS', '#666666');
         this.optionsBtn.onPointerClickObservable.add(() => {
-            this.callbacks.onOptions();
+            const callback = this.callbacks.onOptions || this.callbacks.onSettings;
+            if (callback) callback();
         });
         this.buttonPanel.addControl(this.optionsBtn);
         
         // Credits button
         this.creditsBtn = this.createMenuButton('CREDITS', '#666666');
         this.creditsBtn.onPointerClickObservable.add(() => {
-            this.callbacks.onCredits();
+            if (this.callbacks.onCredits) this.callbacks.onCredits();
         });
         this.buttonPanel.addControl(this.creditsBtn);
         

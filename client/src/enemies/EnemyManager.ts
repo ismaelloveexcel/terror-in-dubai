@@ -143,9 +143,9 @@ export class EnemyManager {
             
             // Spawn a weaker version of Mind Flayer
             const echo = new MindFlayer(this.scene, echoPosition);
-            // Reduce health for echo version
-            echo.config.health = echo.config.maxHealth * 0.5;
-            echo.config.damage *= 0.7;
+            // Reduce health for echo version - use the public properties
+            echo.health = echo.maxHealth * 0.5;
+            echo.damage *= 0.7;
             
             this.enemies.push(echo);
             this.bosses.set('mindflayer_echo', echo);
@@ -250,7 +250,9 @@ export class EnemyManager {
         
         // Update all alive enemies
         this.enemies.forEach(enemy => {
-            enemy.update(deltaTime, playerPosition);
+            // Set target for enemies so they know where the player is
+            enemy.setTarget(playerPosition);
+            enemy.update(deltaTime);
         });
     }
     
