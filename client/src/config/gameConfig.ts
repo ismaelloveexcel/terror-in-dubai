@@ -406,7 +406,7 @@ export const performanceConfig = {
 };
 
 // =============================================================================
-// AUDIO CONFIGURATION
+// AUDIO CONFIGURATION (Legacy - see audioConfig.ts for full system)
 // =============================================================================
 
 export const audioConfig = {
@@ -414,26 +414,78 @@ export const audioConfig = {
   masterVolume: 0.8,
   musicVolume: 0.6,
   sfxVolume: 0.8,
+  voiceVolume: 0.9,
   
-  // Music
+  // Use procedural audio when files not available
+  useProcedural: true,
+  
+  // Music (placeholder file names - use audioConfig.ts for full config)
   music: {
     menu: 'menu-theme.mp3',
     ambient: 'ambient-drone.mp3',
     combat: 'combat-theme.mp3',
     boss: 'boss-theme.mp3',
     victory: 'victory.mp3',
+    credits: 'never-ending-story.mp3', // Never Ending Story dedication for Aidan!
+    gameOver: 'game-over.mp3',
   },
   
-  // SFX
+  // SFX (placeholder file names)
   sfx: {
+    // Weapons
     gunshot: 'gunshot.wav',
     reload: 'reload.wav',
+    empty: 'empty-click.wav',
+    meleeSwing: 'melee-swing.wav',
+    meleeHit: 'melee-hit.wav',
+    
+    // Enemies  
     enemyHit: 'enemy-hit.wav',
     enemyDeath: 'enemy-death.wav',
+    demodogGrowl: 'demodog-growl.wav',
+    demobatScreech: 'demobat-screech.wav',
+    demogorgonRoar: 'demogorgon-roar.wav',
+    
+    // Player
     playerDamage: 'player-damage.wav',
+    playerHeal: 'player-heal.wav',
+    playerDeath: 'player-death.wav',
     footstep: 'footstep.wav',
+    
+    // Environment
+    portalOpen: 'portal-open.wav',
+    portalHum: 'portal-hum.wav',
+    hiveSpawn: 'hive-spawn.wav',
+    hiveDestroy: 'hive-destroy.wav',
+    
+    // UI/Pickups
     pickup: 'pickup.wav',
+    evidenceFound: 'evidence-found.wav',
+    weaponPickup: 'weapon-pickup.wav',
+    objectiveComplete: 'objective-complete.wav',
+    
+    // Vecna/Horror
+    clockTick: 'clock-tick.wav',
     clockChime: 'clock-chime.wav',
+    vecnaTeleport: 'vecna-teleport.wav',
+    vecnaWhisper: 'vecna-whisper.wav',
+    mindFlayerPsychic: 'mindflayer-psychic.wav',
+  },
+  
+  // Voice (placeholder - see audioConfig.ts for full voice clip system)
+  voice: {
+    mammooVoicemail: 'mammoo-voicemail.mp3',
+    vecnaTaunts: 'vecna-taunts.mp3',
+  },
+  
+  // Level-specific music keys
+  levelMusic: {
+    1: { ambient: 'level1-ambient', combat: 'level1-combat' },
+    2: { ambient: 'level2-ambient', combat: 'level2-combat', boss: 'level2-boss' },
+    3: { ambient: 'level3-ambient', combat: 'level3-combat' },
+    4: { ambient: 'level4-ambient', combat: 'level4-combat', boss: 'level4-boss' },
+    5: { ambient: 'level5-ambient', combat: 'level5-combat' },
+    6: { ambient: 'level6-ambient', combat: 'level6-combat', boss: 'level6-boss' },
   },
 };
 
