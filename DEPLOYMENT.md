@@ -8,6 +8,7 @@ This guide outlines the best deployment options for the SAVE ISMAEL game, a Reac
 |----------|---------------------|-----|
 | **Best Overall** | **Railway** | Easiest full-stack deployment with free tier, handles both frontend and backend |
 | **Free Hosting** | **Render** | Generous free tier for both static sites and web services |
+| **Quick Prototyping** | **Replit** | Browser-based IDE + hosting, great for sharing and collaboration |
 | **Maximum Performance** | **Vercel + Railway** | Vercel's Edge Network for frontend + Railway for backend |
 | **Enterprise/Scale** | **AWS/Google Cloud** | Full control, auto-scaling, but more complex setup |
 
@@ -126,7 +127,78 @@ services:
 
 ---
 
-### 3. Vercel + Railway (Best Performance)
+### 3. Replit
+
+**Best for:** Quick prototyping, sharing, and browser-based development
+
+Replit is an excellent choice for quickly deploying and sharing your game. It provides a browser-based IDE with built-in hosting, making it easy to develop, deploy, and share in one place.
+
+**Pros:**
+- Browser-based IDE - no local setup required
+- Free tier with always-on Repls (with Replit Core)
+- Easy sharing via URL
+- Built-in secrets management
+- Great for collaboration
+- Automatic HTTPS
+
+**Cons:**
+- Free tier has limited resources
+- May have cold starts on free tier
+
+**Deployment Steps:**
+
+1. **Create Replit Account**
+   - Go to [replit.com](https://replit.com)
+   - Sign up (can use GitHub)
+
+2. **Import from GitHub**
+   - Click "Create Repl"
+   - Select "Import from GitHub"
+   - Paste the repository URL: `https://github.com/ismaelloveexcel/terror-in-dubai`
+   - Replit will auto-detect Node.js
+
+3. **Configure .replit File**
+   Create or update `.replit` in root:
+   ```toml
+   run = "npm run install:all && npm run build && npm start"
+   
+   [nix]
+   channel = "stable-24_05"
+   
+   [env]
+   NODE_ENV = "production"
+   
+   [[ports]]
+   localPort = 3001
+   externalPort = 80
+   ```
+
+4. **Configure replit.nix (optional):**
+   ```nix
+   { pkgs }: {
+     deps = [
+       pkgs.nodejs_20
+     ];
+   }
+   ```
+
+5. **Set Secrets (Environment Variables)**
+   - Go to "Secrets" tab in Replit
+   - Add: `CORS_ORIGIN` = your Replit URL (e.g., `https://save-ismael.username.repl.co`)
+
+6. **Deploy**
+   - Click the "Run" button
+   - Your app will be live at `https://your-repl-name.username.repl.co`
+
+**Tips for Replit:**
+- Use "Always On" (Replit Core) to prevent cold starts
+- The `.replit` file controls how your app runs
+- Replit automatically provisions HTTPS
+- Great for sharing with friends - just send the URL!
+
+---
+
+### 4. Vercel + Railway (Best Performance)
 
 **Best for:** Maximum performance with separate frontend/backend
 
@@ -164,7 +236,7 @@ fetch(`${API_URL}/api/health`);
 
 ---
 
-### 4. Heroku
+### 5. Heroku
 
 **Best for:** Teams familiar with Heroku
 
@@ -186,7 +258,7 @@ fetch(`${API_URL}/api/health`);
 
 ---
 
-### 5. DigitalOcean App Platform
+### 6. DigitalOcean App Platform
 
 **Best for:** Simple cloud deployment with predictable pricing
 
@@ -205,7 +277,7 @@ fetch(`${API_URL}/api/health`);
 
 ---
 
-### 6. AWS (Elastic Beanstalk or ECS)
+### 7. AWS (Elastic Beanstalk or ECS)
 
 **Best for:** Enterprise deployments requiring full control
 
@@ -257,7 +329,7 @@ CMD ["npm", "start"]
 
 ---
 
-### 7. Google Cloud Run
+### 8. Google Cloud Run
 
 **Best for:** Serverless container deployment with auto-scaling
 
@@ -348,6 +420,7 @@ app.use('/assets', (req, res, next) => {
 |----------|-----------|---------------|
 | Railway | $5/month credits | $5/month |
 | Render | Yes (with limitations) | $7/month |
+| Replit | Yes (with limitations) | $25/month (Core) |
 | Vercel | Yes (frontend only) | $20/month |
 | Heroku | No | $7/month |
 | DigitalOcean | No | $5/month |
