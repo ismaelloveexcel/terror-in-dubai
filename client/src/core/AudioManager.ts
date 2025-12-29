@@ -4,43 +4,18 @@
  * Immersive Sound Design with Procedural Fallbacks
  * 
  * Features:
- * - Level-specific ambient and combat music
+ * - Level-specific ambient & combat music
  * - Boss fight themes
- * - Full SFX library for weapons, enemies, environment
- * - Voice clip support
- * - Procedural audio when files aren't available
- * - Web Audio API integration with Babylon.js
+ * - Procedural audio generation when files unavailable
+ * - Dynamic music transitions
+ * - SPECIAL: "Never Ending Story" dedication for Aidan in credits!
  */
 
 import { Scene, Sound } from '@babylonjs/core';
 import { audioConfig } from '../config/gameConfig';
-import audioConfigComplete, { 
-  levelMusic, 
-  weaponSFX, 
-  enemySFX, 
-  environmentSFX,
-  playerSFX,
-  uiSFX,
-  voiceClips,
-  proceduralParams,
-  volumePresets 
-} from '../config/audioConfig';
 
-// =============================================================================
-// TYPES
-// =============================================================================
-
-type MusicState = 'menu' | 'ambient' | 'combat' | 'boss' | 'victory' | 'gameover' | 'credits';
-
-interface ActiveOscillator {
-  oscillator: OscillatorNode;
-  gain: GainNode;
-  lfo?: OscillatorNode;
-}
-
-// =============================================================================
-// AUDIO MANAGER CLASS
-// =============================================================================
+// Audio state types
+type MusicState = 'menu' | 'ambient' | 'combat' | 'boss' | 'victory' | 'credits' | 'gameOver' | 'none';
 
 export class AudioManager {
   private scene: Scene;
@@ -49,7 +24,7 @@ export class AudioManager {
   private audioContext: AudioContext | null = null;
   private isUnlocked: boolean = false;
   
-  // Loaded sounds (for when audio files are available)
+  // Loaded sounds
   private sounds: Map<string, Sound> = new Map();
   
   // Volume controls
@@ -58,20 +33,20 @@ export class AudioManager {
   private sfxVolume: number = audioConfig.sfxVolume;
   private voiceVolume: number = audioConfig.voiceVolume || 0.9;
   
-  // Current state
+  // Current music state
   private currentMusic: Sound | null = null;
   private currentMusicName: string = '';
-  private currentMusicState: MusicState = 'menu';
+  private musicState: MusicState = 'none';
   private currentLevel: number = 1;
-  private isInCombat: boolean = false;
   
-  // Procedural audio nodes
-  private activeOscillators: Map<string, ActiveOscillator> = new Map();
+  // Ambient drone
   private ambientOscillator: OscillatorNode | null = null;
   private ambientGain: GainNode | null = null;
+  private combatOscillator: OscillatorNode | null = null;
+  private combatGain: GainNode | null = null;
   
-  // Music crossfade
-  private fadeInterval: number | null = null;
+  // Never Ending Story special track
+  private neverEndingStoryLoaded: boolean = false;
   
   constructor(scene: Scene) {
     this.scene = scene;
@@ -85,7 +60,7 @@ export class AudioManager {
     // Create audio context
     this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     
-    // Setup unlock on user interaction (required by browsers)
+    // Setup unlock on user interaction
     const unlockAudio = () => {
       if (this.audioContext && this.audioContext.state === 'suspended') {
         this.audioContext.resume();
@@ -94,137 +69,119 @@ export class AudioManager {
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('keydown', unlockAudio);
-      console.log('[AudioManager] Audio context unlocked');
     };
     
     document.addEventListener('click', unlockAudio);
     document.addEventListener('touchstart', unlockAudio);
     document.addEventListener('keydown', unlockAudio);
     
-    console.log('[AudioManager] Initialized with procedural audio support');
+    // Pre-load the special Never Ending Story track for credits
+    this.preloadNeverEndingStory();
   }
   
   // ===========================================================================
-  // LEVEL MUSIC SYSTEM
+  // NEVER ENDING STORY - SPECIAL DEDICATION FOR AIDAN
   // ===========================================================================
   
-  /**
-   * Set the current level for level-specific music
-   */
-  public setLevel(level: number): void {
-    this.currentLevel = level;
-    console.log(`[AudioManager] Level set to ${level}`);
-  }
-  
-  /**
-   * Play ambient music for current level
-   */
-  public playLevelAmbient(): void {
-    this.isInCombat = false;
-    this.currentMusicState = 'ambient';
-    
-    const levelMusicConfig = levelMusic[this.currentLevel];
-    if (levelMusicConfig?.ambient) {
-      this.transitionToMusic('ambient');
-    }
-  }
-  
-  /**
-   * Switch to combat music for current level
-   */
-  public playLevelCombat(): void {
-    if (this.isInCombat) return; // Already in combat
-    
-    this.isInCombat = true;
-    this.currentMusicState = 'combat';
-    
-    const levelMusicConfig = levelMusic[this.currentLevel];
-    if (levelMusicConfig?.combat) {
-      this.transitionToMusic('combat');
-    }
-  }
-  
-  /**
-   * Play boss music for current level
-   */
-  public playBossMusic(): void {
-    this.currentMusicState = 'boss';
-    
-    const levelMusicConfig = levelMusic[this.currentLevel];
-    if (levelMusicConfig?.boss) {
-      this.transitionToMusic('boss');
-    } else {
-      // Fallback to generic boss music
-      this.playBossDrone();
-    }
-  }
-  
-  /**
-   * Transition between music states with crossfade
-   */
-  private transitionToMusic(state: MusicState): void {
-    // Fade out current music
-    if (this.ambientGain && this.audioContext) {
-      const fadeOutTime = 1.5;
-      this.ambientGain.gain.linearRampToValueAtTime(
-        0,
-        this.audioContext.currentTime + fadeOutTime
+  private preloadNeverEndingStory(): void {
+    try {
+      const neverEndingStory = new Sound(
+        'never-ending-story',
+        '/assets/audio/music/never-ending-story.mp3',
+        this.scene,
+        () => {
+          this.neverEndingStoryLoaded = true;
+          console.log('🎵 Never Ending Story loaded - Ready for Aidan\'s dedication!');
+        },
+        {
+          loop: false,
+          autoplay: false,
+          volume: this.masterVolume * this.musicVolume,
+        }
       );
-      
-      // Stop and restart with new music after fade
-      setTimeout(() => {
-        this.stopAmbientDrone();
-        this.startProceduralMusic(state);
-      }, fadeOutTime * 1000);
-    } else {
-      this.startProceduralMusic(state);
+      this.sounds.set('never-ending-story', neverEndingStory);
+    } catch (e) {
+      console.log('Never Ending Story will use procedural fallback');
     }
   }
   
-  // ===========================================================================
-  // MUSIC PLAYBACK
-  // ===========================================================================
-  
-  public playMusic(name: string): void {
-    // Stop current music
-    if (this.currentMusic && this.currentMusicName !== name) {
-      this.currentMusic.stop();
+  /**
+   * Play the special credits dedication for Aidan
+   * "Turn around, look at what you see..."
+   */
+  public playCreditsWithDedication(): void {
+    this.stopMusic();
+    this.musicState = 'credits';
+    
+    // Try to play the actual Never Ending Story track
+    const neverEndingStory = this.sounds.get('never-ending-story');
+    if (neverEndingStory && this.neverEndingStoryLoaded) {
+      neverEndingStory.setVolume(this.masterVolume * this.musicVolume);
+      neverEndingStory.play();
+      this.currentMusic = neverEndingStory;
+      this.currentMusicName = 'never-ending-story';
+      console.log('🎵 Playing: Never Ending Story - Dedicated to Awesome Aidan! 🌟');
+    } else {
+      // Fallback to procedural dreamy synth
+      this.startCreditsTheme();
+      console.log('🎵 Credits Theme (Procedural) - Dedicated to Awesome Aidan! 🌟');
     }
     
-    // Check if we have the actual audio file
-    const sound = this.sounds.get(name);
-    if (sound) {
-      this.currentMusic = sound;
-      this.currentMusicName = name;
-      sound.setVolume(this.masterVolume * this.musicVolume);
-      sound.play();
-    } else {
-      // Use procedural music
-      this.startProceduralMusic(name as MusicState);
-      this.currentMusicName = name;
-    }
-  }
-  
-  public stopMusic(): void {
-    if (this.currentMusic) {
-      this.currentMusic.stop();
-      this.currentMusic = null;
-    }
-    this.stopAmbientDrone();
-    this.stopAllOscillators();
-    this.currentMusicName = '';
+    // Dispatch event for UI to show dedication
+    window.dispatchEvent(new CustomEvent('creditsDedication', {
+      detail: {
+        message: 'Dedicated to Awesome Aidan',
+        song: 'Never Ending Story',
+        artist: 'Dustin & Suzie (Stranger Things 3)',
+      }
+    }));
   }
   
   // ===========================================================================
-  // PROCEDURAL MUSIC
+  // SOUND LOADING
   // ===========================================================================
   
-  private startProceduralMusic(state: MusicState): void {
-    this.stopAmbientDrone();
+  public loadSound(
+    name: string, 
+    url: string, 
+    options: { loop?: boolean; autoplay?: boolean; volume?: number } = {}
+  ): void {
+    try {
+      const sound = new Sound(
+        name,
+        url,
+        this.scene,
+        null,
+        {
+          loop: options.loop || false,
+          autoplay: options.autoplay || false,
+          volume: (options.volume || 1) * this.masterVolume,
+        }
+      );
+      this.sounds.set(name, sound);
+    } catch (e) {
+      console.warn(`Failed to load sound: ${name}`);
+    }
+  }
+  
+  // ===========================================================================
+  // MUSIC - Level Aware
+  // ===========================================================================
+  
+  public setCurrentLevel(level: number): void {
+    this.currentLevel = level;
+  }
+  
+  public playMusic(state: MusicState): void {
+    if (this.musicState === state) return;
+    
+    // Stop current music
+    this.stopMusic();
+    this.musicState = state;
     
     switch (state) {
       case 'menu':
-        this.startMenuMusic();
+        this.startMenuTheme();
         break;
       case 'ambient':
         this.startAmbientDrone();
@@ -233,108 +190,113 @@ export class AudioManager {
         this.startCombatMusic();
         break;
       case 'boss':
-        this.playBossDrone();
+        this.startBossMusic();
         break;
       case 'victory':
-        this.playVictoryFanfare();
-        break;
-      case 'gameover':
-        this.playGameOverMusic();
+        this.startVictoryTheme();
         break;
       case 'credits':
-        this.startCreditsMusic();
+        this.playCreditsWithDedication();
         break;
-      default:
-        this.startAmbientDrone();
+      case 'gameOver':
+        this.startGameOverTheme();
+        break;
     }
+    
+    this.currentMusicName = state;
   }
   
-  /**
-   * Menu theme - eerie synth pads
-   */
-  private startMenuMusic(): void {
+  public stopMusic(): void {
+    if (this.currentMusic) {
+      this.currentMusic.stop();
+      this.currentMusic = null;
+    }
+    this.stopAmbientDrone();
+    this.stopCombatMusic();
+    this.currentMusicName = '';
+    this.musicState = 'none';
+  }
+  
+  // Transition between ambient and combat
+  public transitionToCombat(): void {
+    if (this.musicState === 'combat') return;
+    this.playMusic('combat');
+  }
+  
+  public transitionToAmbient(): void {
+    if (this.musicState === 'ambient') return;
+    this.playMusic('ambient');
+  }
+  
+  // ===========================================================================
+  // PROCEDURAL MUSIC GENERATORS
+  // ===========================================================================
+  
+  private startMenuTheme(): void {
     if (!this.audioContext) return;
     
-    const volume = this.masterVolume * this.musicVolume;
+    // Eerie synth pad
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(110, this.audioContext.currentTime); // A2
     
-    // Main pad - low A
-    this.ambientOscillator = this.audioContext.createOscillator();
-    this.ambientOscillator.type = 'sine';
-    this.ambientOscillator.frequency.setValueAtTime(55, this.audioContext.currentTime);
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(165, this.audioContext.currentTime); // E3 (fifth)
     
-    // Second pad - haunting fifth
-    const pad2 = this.audioContext.createOscillator();
-    pad2.type = 'triangle';
-    pad2.frequency.setValueAtTime(82.41, this.audioContext.currentTime); // E2
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(this.masterVolume * this.musicVolume * 0.08, this.audioContext.currentTime);
     
     // LFO for movement
     const lfo = this.audioContext.createOscillator();
     lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(0.3, this.audioContext.currentTime);
+    lfo.frequency.setValueAtTime(0.2, this.audioContext.currentTime);
     
     const lfoGain = this.audioContext.createGain();
     lfoGain.gain.setValueAtTime(3, this.audioContext.currentTime);
     
-    // Filter for warmth
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
-    filter.Q.setValueAtTime(2, this.audioContext.currentTime);
-    
-    // Main gain
-    this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.ambientGain.gain.linearRampToValueAtTime(volume * 0.15, this.audioContext.currentTime + 2);
-    
-    // Connect
     lfo.connect(lfoGain);
-    lfoGain.connect(this.ambientOscillator.frequency);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
     
-    this.ambientOscillator.connect(filter);
-    pad2.connect(filter);
-    filter.connect(this.ambientGain);
-    this.ambientGain.connect(this.audioContext.destination);
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.audioContext.destination);
     
-    // Start
-    this.ambientOscillator.start();
-    pad2.start();
+    osc1.start();
+    osc2.start();
     lfo.start();
     
-    // Store for cleanup
-    this.activeOscillators.set('menu_pad2', { oscillator: pad2, gain: this.ambientGain, lfo });
+    this.ambientOscillator = osc1;
+    this.ambientGain = gain;
   }
   
-  /**
-   * Ambient drone - creepy exploration
-   */
   private startAmbientDrone(): void {
     if (!this.audioContext || this.ambientOscillator) return;
     
-    const volume = this.masterVolume * this.musicVolume;
+    // Level-specific frequencies
+    const levelFrequencies: Record<number, number> = {
+      1: 55,   // A1 - Mall ambience
+      2: 45,   // Lower - Underground tunnels
+      3: 65,   // Higher - Height/vertigo
+      4: 50,   // Water/marina
+      5: 52,   // Downtown tension
+      6: 40,   // Deep, ominous - Vecna's domain
+    };
+    
+    const baseFreq = levelFrequencies[this.currentLevel] || 55;
     
     // Create oscillator for low drone
     this.ambientOscillator = this.audioContext.createOscillator();
     this.ambientOscillator.type = 'sine';
-    
-    // Level-specific base note
-    const baseNotes: Record<number, number> = {
-      1: 55,    // A1 - Mall
-      2: 49,    // G1 - Metro (lower, underground)
-      3: 65.41, // C2 - Frame (slightly higher, vertigo)
-      4: 41.2,  // E1 - Marina (deep, water)
-      5: 55,    // A1 - Downtown
-      6: 36.71, // D1 - Burj Khalifa (deepest, Vecna's domain)
-    };
-    
-    this.ambientOscillator.frequency.setValueAtTime(
-      baseNotes[this.currentLevel] || 55,
-      this.audioContext.currentTime
-    );
+    this.ambientOscillator.frequency.setValueAtTime(baseFreq, this.audioContext.currentTime);
     
     // Create gain node
     this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.ambientGain.gain.linearRampToValueAtTime(volume * 0.1, this.audioContext.currentTime + 2);
+    this.ambientGain.gain.setValueAtTime(
+      this.masterVolume * this.musicVolume * 0.1,
+      this.audioContext.currentTime
+    );
     
     // Create LFO for subtle movement
     const lfo = this.audioContext.createOscillator();
@@ -357,263 +319,6 @@ export class AudioManager {
     lfo.start();
   }
   
-  /**
-   * Combat music - intense pulse
-   */
-  private startCombatMusic(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.musicVolume;
-    
-    // Bass pulse
-    this.ambientOscillator = this.audioContext.createOscillator();
-    this.ambientOscillator.type = 'sawtooth';
-    this.ambientOscillator.frequency.setValueAtTime(55, this.audioContext.currentTime);
-    
-    // Filter for aggression
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
-    filter.Q.setValueAtTime(5, this.audioContext.currentTime);
-    
-    // LFO for filter sweep
-    const filterLfo = this.audioContext.createOscillator();
-    filterLfo.type = 'sine';
-    filterLfo.frequency.setValueAtTime(0.25, this.audioContext.currentTime);
-    
-    const filterLfoGain = this.audioContext.createGain();
-    filterLfoGain.gain.setValueAtTime(200, this.audioContext.currentTime);
-    
-    filterLfo.connect(filterLfoGain);
-    filterLfoGain.connect(filter.frequency);
-    
-    // Main gain with pulse
-    this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.ambientGain.gain.linearRampToValueAtTime(volume * 0.2, this.audioContext.currentTime + 0.5);
-    
-    // Pulse LFO
-    const pulseLfo = this.audioContext.createOscillator();
-    pulseLfo.type = 'square';
-    pulseLfo.frequency.setValueAtTime(2.33, this.audioContext.currentTime); // ~140 BPM
-    
-    const pulseLfoGain = this.audioContext.createGain();
-    pulseLfoGain.gain.setValueAtTime(volume * 0.1, this.audioContext.currentTime);
-    
-    pulseLfo.connect(pulseLfoGain);
-    pulseLfoGain.connect(this.ambientGain.gain);
-    
-    // Connect
-    this.ambientOscillator.connect(filter);
-    filter.connect(this.ambientGain);
-    this.ambientGain.connect(this.audioContext.destination);
-    
-    // Start
-    this.ambientOscillator.start();
-    filterLfo.start();
-    pulseLfo.start();
-    
-    this.activeOscillators.set('combat_filterLfo', { oscillator: filterLfo, gain: filterLfoGain });
-    this.activeOscillators.set('combat_pulseLfo', { oscillator: pulseLfo, gain: pulseLfoGain });
-  }
-  
-  /**
-   * Boss music - overwhelming, cosmic horror
-   */
-  private playBossDrone(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.musicVolume;
-    
-    // Deep sub bass
-    this.ambientOscillator = this.audioContext.createOscillator();
-    this.ambientOscillator.type = 'sine';
-    this.ambientOscillator.frequency.setValueAtTime(30, this.audioContext.currentTime);
-    
-    // Detuned second oscillator
-    const osc2 = this.audioContext.createOscillator();
-    osc2.type = 'sawtooth';
-    osc2.frequency.setValueAtTime(60, this.audioContext.currentTime);
-    osc2.detune.setValueAtTime(5, this.audioContext.currentTime);
-    
-    // Third oscillator - high tension
-    const osc3 = this.audioContext.createOscillator();
-    osc3.type = 'triangle';
-    osc3.frequency.setValueAtTime(220, this.audioContext.currentTime);
-    
-    // Slow LFO for dread
-    const lfo = this.audioContext.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
-    
-    const lfoGain = this.audioContext.createGain();
-    lfoGain.gain.setValueAtTime(10, this.audioContext.currentTime);
-    
-    lfo.connect(lfoGain);
-    lfoGain.connect(this.ambientOscillator.frequency);
-    
-    // Filter
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(200, this.audioContext.currentTime);
-    filter.Q.setValueAtTime(3, this.audioContext.currentTime);
-    
-    // Main gain with fade in
-    this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.ambientGain.gain.linearRampToValueAtTime(volume * 0.25, this.audioContext.currentTime + 3);
-    
-    // Mixer
-    const mixer = this.audioContext.createGain();
-    mixer.gain.setValueAtTime(1, this.audioContext.currentTime);
-    
-    // Connect
-    this.ambientOscillator.connect(mixer);
-    osc2.connect(mixer);
-    osc3.connect(mixer);
-    mixer.connect(filter);
-    filter.connect(this.ambientGain);
-    this.ambientGain.connect(this.audioContext.destination);
-    
-    // Start
-    this.ambientOscillator.start();
-    osc2.start();
-    osc3.start();
-    lfo.start();
-    
-    this.activeOscillators.set('boss_osc2', { oscillator: osc2, gain: mixer });
-    this.activeOscillators.set('boss_osc3', { oscillator: osc3, gain: mixer });
-    this.activeOscillators.set('boss_lfo', { oscillator: lfo, gain: lfoGain });
-  }
-  
-  /**
-   * Victory fanfare
-   */
-  private playVictoryFanfare(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.musicVolume;
-    const now = this.audioContext.currentTime;
-    
-    // Major chord arpeggio: C - E - G - C'
-    const notes = [261.63, 329.63, 392.00, 523.25];
-    
-    notes.forEach((freq, i) => {
-      const osc = this.audioContext!.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + i * 0.15);
-      
-      const gain = this.audioContext!.createGain();
-      gain.gain.setValueAtTime(0, now + i * 0.15);
-      gain.gain.linearRampToValueAtTime(volume * 0.2, now + i * 0.15 + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 2);
-      
-      osc.connect(gain);
-      gain.connect(this.audioContext!.destination);
-      
-      osc.start(now + i * 0.15);
-      osc.stop(now + i * 0.15 + 2);
-    });
-    
-    // Sustain pad
-    setTimeout(() => {
-      if (!this.audioContext) return;
-      
-      this.ambientOscillator = this.audioContext.createOscillator();
-      this.ambientOscillator.type = 'triangle';
-      this.ambientOscillator.frequency.setValueAtTime(261.63, this.audioContext.currentTime);
-      
-      this.ambientGain = this.audioContext.createGain();
-      this.ambientGain.gain.setValueAtTime(volume * 0.1, this.audioContext.currentTime);
-      
-      this.ambientOscillator.connect(this.ambientGain);
-      this.ambientGain.connect(this.audioContext.destination);
-      this.ambientOscillator.start();
-    }, 800);
-  }
-  
-  /**
-   * Game over music - descent into darkness
-   */
-  private playGameOverMusic(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.musicVolume;
-    
-    // Descending drone
-    this.ambientOscillator = this.audioContext.createOscillator();
-    this.ambientOscillator.type = 'sine';
-    this.ambientOscillator.frequency.setValueAtTime(110, this.audioContext.currentTime);
-    this.ambientOscillator.frequency.exponentialRampToValueAtTime(27.5, this.audioContext.currentTime + 4);
-    
-    this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(volume * 0.15, this.audioContext.currentTime);
-    this.ambientGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 5);
-    
-    this.ambientOscillator.connect(this.ambientGain);
-    this.ambientGain.connect(this.audioContext.destination);
-    
-    this.ambientOscillator.start();
-    this.ambientOscillator.stop(this.audioContext.currentTime + 5);
-    
-    // Clock chimes
-    setTimeout(() => this.playClockChime(), 1000);
-  }
-  
-  /**
-   * Credits music - hopeful, nostalgic (Never Ending Story tribute)
-   */
-  private startCreditsMusic(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.musicVolume;
-    
-    // Warm pad - C major
-    this.ambientOscillator = this.audioContext.createOscillator();
-    this.ambientOscillator.type = 'triangle';
-    this.ambientOscillator.frequency.setValueAtTime(261.63, this.audioContext.currentTime);
-    
-    // Add fifth
-    const osc2 = this.audioContext.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(392, this.audioContext.currentTime); // G4
-    
-    // Gentle vibrato
-    const lfo = this.audioContext.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(4, this.audioContext.currentTime);
-    
-    const lfoGain = this.audioContext.createGain();
-    lfoGain.gain.setValueAtTime(2, this.audioContext.currentTime);
-    
-    lfo.connect(lfoGain);
-    lfoGain.connect(this.ambientOscillator.frequency);
-    
-    // Filter for warmth
-    const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(600, this.audioContext.currentTime);
-    
-    // Gain with fade in
-    this.ambientGain = this.audioContext.createGain();
-    this.ambientGain.gain.setValueAtTime(0, this.audioContext.currentTime);
-    this.ambientGain.gain.linearRampToValueAtTime(volume * 0.12, this.audioContext.currentTime + 3);
-    
-    // Connect
-    this.ambientOscillator.connect(filter);
-    osc2.connect(filter);
-    filter.connect(this.ambientGain);
-    this.ambientGain.connect(this.audioContext.destination);
-    
-    // Start
-    this.ambientOscillator.start();
-    osc2.start();
-    lfo.start();
-    
-    this.activeOscillators.set('credits_osc2', { oscillator: osc2, gain: this.ambientGain });
-    this.activeOscillators.set('credits_lfo', { oscillator: lfo, gain: lfoGain });
-  }
-  
   private stopAmbientDrone(): void {
     if (this.ambientOscillator) {
       try {
@@ -623,25 +328,192 @@ export class AudioManager {
       this.ambientOscillator = null;
     }
     if (this.ambientGain) {
-      try {
-        this.ambientGain.disconnect();
-      } catch (e) {}
+      this.ambientGain.disconnect();
       this.ambientGain = null;
     }
   }
   
-  private stopAllOscillators(): void {
-    this.activeOscillators.forEach((active) => {
+  private startCombatMusic(): void {
+    if (!this.audioContext || this.combatOscillator) return;
+    
+    // Pulsing bass
+    this.combatOscillator = this.audioContext.createOscillator();
+    this.combatOscillator.type = 'sawtooth';
+    this.combatOscillator.frequency.setValueAtTime(55, this.audioContext.currentTime);
+    
+    // Filter for grit
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, this.audioContext.currentTime);
+    filter.Q.setValueAtTime(5, this.audioContext.currentTime);
+    
+    // Pulse the filter
+    const lfo = this.audioContext.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(2.3, this.audioContext.currentTime); // ~140 BPM feel
+    
+    const lfoGain = this.audioContext.createGain();
+    lfoGain.gain.setValueAtTime(200, this.audioContext.currentTime);
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+    
+    this.combatGain = this.audioContext.createGain();
+    this.combatGain.gain.setValueAtTime(
+      this.masterVolume * this.musicVolume * 0.15,
+      this.audioContext.currentTime
+    );
+    
+    this.combatOscillator.connect(filter);
+    filter.connect(this.combatGain);
+    this.combatGain.connect(this.audioContext.destination);
+    
+    this.combatOscillator.start();
+    lfo.start();
+  }
+  
+  private stopCombatMusic(): void {
+    if (this.combatOscillator) {
       try {
-        active.oscillator.stop();
-        active.oscillator.disconnect();
-        if (active.lfo) {
-          active.lfo.stop();
-          active.lfo.disconnect();
-        }
+        this.combatOscillator.stop();
+        this.combatOscillator.disconnect();
       } catch (e) {}
+      this.combatOscillator = null;
+    }
+    if (this.combatGain) {
+      this.combatGain.disconnect();
+      this.combatGain = null;
+    }
+  }
+  
+  private startBossMusic(): void {
+    if (!this.audioContext) return;
+    
+    // Deep, ominous for boss fights
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(40, this.audioContext.currentTime);
+    
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(80, this.audioContext.currentTime);
+    
+    // Heavy filter
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(this.masterVolume * this.musicVolume * 0.2, this.audioContext.currentTime);
+    
+    // Slow LFO for dread
+    const lfo = this.audioContext.createOscillator();
+    lfo.frequency.setValueAtTime(0.1, this.audioContext.currentTime);
+    const lfoGain = this.audioContext.createGain();
+    lfoGain.gain.setValueAtTime(20, this.audioContext.currentTime);
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.audioContext.destination);
+    
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    
+    this.combatOscillator = osc1;
+    this.combatGain = gain;
+  }
+  
+  private startVictoryTheme(): void {
+    if (!this.audioContext) return;
+    
+    // Major chord arpeggio - triumphant!
+    const notes = [261.63, 329.63, 392, 523.25]; // C4, E4, G4, C5
+    
+    notes.forEach((freq, i) => {
+      setTimeout(() => {
+        if (!this.audioContext) return;
+        const osc = this.audioContext.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(this.masterVolume * this.musicVolume * 0.2, this.audioContext.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 2);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 2);
+      }, i * 300);
     });
-    this.activeOscillators.clear();
+  }
+  
+  private startCreditsTheme(): void {
+    if (!this.audioContext) return;
+    
+    // Dreamy, hopeful synth (Never Ending Story vibe)
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(220, this.audioContext.currentTime); // A3
+    
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(330, this.audioContext.currentTime); // E4
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(this.masterVolume * this.musicVolume * 0.12, this.audioContext.currentTime + 2);
+    
+    // Gentle vibrato
+    const lfo = this.audioContext.createOscillator();
+    lfo.frequency.setValueAtTime(4, this.audioContext.currentTime);
+    const lfoGain = this.audioContext.createGain();
+    lfoGain.gain.setValueAtTime(3, this.audioContext.currentTime);
+    
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfoGain.connect(osc2.frequency);
+    
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.audioContext.destination);
+    
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    
+    this.ambientOscillator = osc1;
+    this.ambientGain = gain;
+  }
+  
+  private startGameOverTheme(): void {
+    if (!this.audioContext) return;
+    
+    // Vecna's clock chimes - 4 deep tones
+    this.playClockChime();
+    
+    // Then fade to silence with low drone
+    setTimeout(() => {
+      if (!this.audioContext) return;
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(30, this.audioContext.currentTime);
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(this.masterVolume * this.musicVolume * 0.1, this.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 5);
+      
+      osc.connect(gain);
+      gain.connect(this.audioContext.destination);
+      osc.start();
+      osc.stop(this.audioContext.currentTime + 5);
+    }, 3500);
   }
   
   // ===========================================================================
@@ -649,7 +521,7 @@ export class AudioManager {
   // ===========================================================================
   
   public playSFX(name: string): void {
-    // Check for loaded sound first
+    // Try loaded sound first
     const sound = this.sounds.get(name);
     if (sound) {
       sound.setVolume(this.masterVolume * this.sfxVolume);
@@ -657,11 +529,7 @@ export class AudioManager {
       return;
     }
     
-    // Use procedural SFX
-    this.playProceduralSFX(name);
-  }
-  
-  private playProceduralSFX(name: string): void {
+    // Procedural SFX fallback
     switch (name) {
       // Weapons
       case 'gunshot':
@@ -676,21 +544,19 @@ export class AudioManager {
       case 'pistolEmpty':
         this.playEmptyClick();
         break;
+      case 'meleeSwing':
       case 'katanaSwing':
       case 'nailBatSwing':
-      case 'meleeSwing':
         this.playMeleeSwing();
         break;
+      case 'meleeHit':
       case 'katanaHit':
       case 'nailBatHit':
-      case 'meleeHit':
+      case 'shieldBash':
         this.playMeleeHit();
         break;
       case 'shieldBlock':
         this.playShieldBlock();
-        break;
-      case 'shieldBash':
-        this.playShieldBash();
         break;
         
       // Enemies
@@ -709,8 +575,16 @@ export class AudioManager {
       case 'demogorgonRoar':
         this.playDemogorgonRoar();
         break;
-      case 'mindFlayerPsychic':
-        this.playMindFlayerPsychic();
+        
+      // Player
+      case 'playerDamage':
+        this.playPlayerDamage();
+        break;
+      case 'playerHeal':
+        this.playPlayerHeal();
+        break;
+      case 'footstep':
+        this.playFootstep();
         break;
         
       // Environment
@@ -727,18 +601,7 @@ export class AudioManager {
         this.playHiveDestroy();
         break;
         
-      // Player
-      case 'playerDamage':
-        this.playPlayerDamage();
-        break;
-      case 'playerHeal':
-        this.playPlayerHeal();
-        break;
-      case 'footstep':
-        this.playFootstep();
-        break;
-        
-      // UI
+      // UI/Pickups
       case 'pickup':
         this.playPickup();
         break;
@@ -752,7 +615,7 @@ export class AudioManager {
         this.playObjectiveComplete();
         break;
         
-      // Vecna/Horror
+      // Horror/Vecna
       case 'clockTick':
         this.playClockTick();
         break;
@@ -765,23 +628,22 @@ export class AudioManager {
       case 'vecnaWhisper':
         this.playVecnaWhisper();
         break;
-        
-      default:
-        console.log(`[AudioManager] Unknown SFX: ${name}`);
+      case 'mindFlayerPsychic':
+        this.playMindFlayerPsychic();
+        break;
     }
   }
   
-  // ---------------------------------------------------------------------------
-  // WEAPON SFX
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // WEAPON SOUNDS
+  // ===========================================================================
   
   private playGunshot(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Noise burst
+    // Noise burst for gunshot
     const bufferSize = this.audioContext.sampleRate * 0.1;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
@@ -794,18 +656,18 @@ export class AudioManager {
     noise.buffer = buffer;
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    gain.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
     
-    // Low thump
+    // Add a click/thump
     const osc = this.audioContext.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.05);
+    osc.frequency.setValueAtTime(150, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.05);
     
     const oscGain = this.audioContext.createGain();
-    oscGain.gain.setValueAtTime(volume * 0.5, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    oscGain.gain.setValueAtTime(volume * 0.5, this.audioContext.currentTime);
+    oscGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
     
     noise.connect(gain);
     gain.connect(this.audioContext.destination);
@@ -814,96 +676,70 @@ export class AudioManager {
     
     noise.start();
     osc.start();
-    osc.stop(now + 0.08);
+    osc.stop(this.audioContext.currentTime + 0.08);
   }
   
   private playReload(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Click (magazine out)
-    const click1 = this.audioContext.createOscillator();
-    click1.type = 'square';
-    click1.frequency.setValueAtTime(2000, now);
+    // Magazine click
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(500, this.audioContext.currentTime + 0.05);
     
-    const click1Gain = this.audioContext.createGain();
-    click1Gain.gain.setValueAtTime(volume * 0.1, now);
-    click1Gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+    const gain1 = this.audioContext.createGain();
+    gain1.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
     
-    click1.connect(click1Gain);
-    click1Gain.connect(this.audioContext.destination);
-    click1.start(now);
-    click1.stop(now + 0.02);
+    osc1.connect(gain1);
+    gain1.connect(this.audioContext.destination);
+    osc1.start();
+    osc1.stop(this.audioContext.currentTime + 0.1);
     
-    // Slide (magazine in)
+    // Slide rack after delay
     setTimeout(() => {
       if (!this.audioContext) return;
-      const slideNow = this.audioContext.currentTime;
+      const osc2 = this.audioContext.createOscillator();
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(800, this.audioContext.currentTime);
+      osc2.frequency.linearRampToValueAtTime(400, this.audioContext.currentTime + 0.15);
       
-      const slide = this.audioContext.createOscillator();
-      slide.type = 'sawtooth';
-      slide.frequency.setValueAtTime(400, slideNow);
-      slide.frequency.linearRampToValueAtTime(800, slideNow + 0.1);
+      const gain2 = this.audioContext.createGain();
+      gain2.gain.setValueAtTime(volume * 0.15, this.audioContext.currentTime);
+      gain2.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
       
-      const slideGain = this.audioContext.createGain();
-      slideGain.gain.setValueAtTime(volume * 0.15, slideNow);
-      slideGain.gain.exponentialRampToValueAtTime(0.001, slideNow + 0.1);
-      
-      slide.connect(slideGain);
-      slideGain.connect(this.audioContext.destination);
-      slide.start(slideNow);
-      slide.stop(slideNow + 0.1);
-    }, 300);
-    
-    // Click (rack slide)
-    setTimeout(() => {
-      if (!this.audioContext) return;
-      const clickNow = this.audioContext.currentTime;
-      
-      const click2 = this.audioContext.createOscillator();
-      click2.type = 'square';
-      click2.frequency.setValueAtTime(3000, clickNow);
-      
-      const click2Gain = this.audioContext.createGain();
-      click2Gain.gain.setValueAtTime(volume * 0.15, clickNow);
-      click2Gain.gain.exponentialRampToValueAtTime(0.001, clickNow + 0.03);
-      
-      click2.connect(click2Gain);
-      click2Gain.connect(this.audioContext.destination);
-      click2.start(clickNow);
-      click2.stop(clickNow + 0.03);
-    }, 600);
+      osc2.connect(gain2);
+      gain2.connect(this.audioContext.destination);
+      osc2.start();
+      osc2.stop(this.audioContext.currentTime + 0.15);
+    }, 200);
   }
   
   private playEmptyClick(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     const osc = this.audioContext.createOscillator();
     osc.type = 'square';
-    osc.frequency.setValueAtTime(1500, now);
+    osc.frequency.setValueAtTime(1500, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    gain.gain.setValueAtTime(volume * 0.15, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.03);
     
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
-    osc.start(now);
-    osc.stop(now + 0.03);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.03);
   }
   
   private playMeleeSwing(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Whoosh
+    // Whoosh sound
     const bufferSize = this.audioContext.sampleRate * 0.2;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
@@ -918,362 +754,335 @@ export class AudioManager {
     
     const filter = this.audioContext.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(800, now);
-    filter.frequency.linearRampToValueAtTime(2000, now + 0.15);
-    filter.Q.setValueAtTime(2, now);
+    filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(2000, this.audioContext.currentTime + 0.15);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    gain.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.audioContext.destination);
-    noise.start(now);
+    noise.start();
   }
   
   private playMeleeHit(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Impact thud
+    // Thwack with some wetness
     const osc = this.audioContext.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(150, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+    osc.frequency.setValueAtTime(200, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, this.audioContext.currentTime + 0.1);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.4, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    
-    // Noise layer
-    const noiseBuffer = this.audioContext.createBuffer(1, this.audioContext.sampleRate * 0.1, this.audioContext.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseData.length; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (noiseData.length * 0.2));
-    }
-    
-    const noise = this.audioContext.createBufferSource();
-    noise.buffer = noiseBuffer;
-    
-    const noiseGain = this.audioContext.createGain();
-    noiseGain.gain.setValueAtTime(volume * 0.15, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    gain.gain.setValueAtTime(volume * 0.4, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
     
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
-    noise.connect(noiseGain);
-    noiseGain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    noise.start(now);
-    osc.stop(now + 0.15);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.15);
   }
   
   private playShieldBlock(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     // Metallic clang
     const osc1 = this.audioContext.createOscillator();
     osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(600, now);
+    osc1.frequency.setValueAtTime(800, this.audioContext.currentTime);
     
     const osc2 = this.audioContext.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1200, now);
+    osc2.frequency.setValueAtTime(1200, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    gain.gain.setValueAtTime(volume * 0.35, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
     
     osc1.connect(gain);
     osc2.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.3);
-    osc2.stop(now + 0.3);
+    osc1.start();
+    osc2.start();
+    osc1.stop(this.audioContext.currentTime + 0.3);
+    osc2.stop(this.audioContext.currentTime + 0.3);
   }
   
-  private playShieldBash(): void {
-    this.playMeleeHit();
-    setTimeout(() => this.playShieldBlock(), 50);
-  }
-  
-  // ---------------------------------------------------------------------------
-  // ENEMY SFX
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // ENEMY SOUNDS
+  // ===========================================================================
   
   private playEnemyHit(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     const osc = this.audioContext.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, now);
-    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+    osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.1);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    gain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.1);
     
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
     
-    osc.start(now);
-    osc.stop(now + 0.1);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.1);
   }
   
   private playEnemyDeath(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Distorted growl
+    // Distorted growl/screech
     const osc = this.audioContext.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(200, now);
-    osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+    osc.frequency.setValueAtTime(200, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.3);
     
     const distortion = this.audioContext.createWaveShaper();
     distortion.curve = this.makeDistortionCurve(100);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.3, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    gain.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
     
     osc.connect(distortion);
     distortion.connect(gain);
     gain.connect(this.audioContext.destination);
     
-    osc.start(now);
-    osc.stop(now + 0.3);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.3);
   }
   
   private playDemodogGrowl(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Low rumbling growl
     const osc = this.audioContext.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(80 + Math.random() * 20, now);
-    
-    // Tremolo
-    const tremolo = this.audioContext.createOscillator();
-    tremolo.type = 'sine';
-    tremolo.frequency.setValueAtTime(8, now);
-    
-    const tremoloGain = this.audioContext.createGain();
-    tremoloGain.gain.setValueAtTime(0.3, now);
-    
-    tremolo.connect(tremoloGain);
-    
-    const mainGain = this.audioContext.createGain();
-    mainGain.gain.setValueAtTime(volume * 0.25, now);
-    mainGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    
-    tremoloGain.connect(mainGain.gain);
-    
-    osc.connect(mainGain);
-    mainGain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    tremolo.start(now);
-    osc.stop(now + 0.5);
-    tremolo.stop(now + 0.5);
-  }
-  
-  private playDemobatScreech(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
-    // High-pitched screech
-    const osc = this.audioContext.createOscillator();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(2000 + Math.random() * 500, now);
-    osc.frequency.linearRampToValueAtTime(3000, now + 0.1);
-    osc.frequency.linearRampToValueAtTime(1500, now + 0.25);
+    osc.frequency.setValueAtTime(100, this.audioContext.currentTime);
+    osc.frequency.linearRampToValueAtTime(80, this.audioContext.currentTime + 0.3);
     
     const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.setValueAtTime(1000, now);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(300, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    gain.gain.setValueAtTime(volume * 0.25, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
     
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.4);
+  }
+  
+  private playDemobatScreech(): void {
+    if (!this.audioContext) return;
+    const volume = this.masterVolume * this.sfxVolume;
     
-    osc.start(now);
-    osc.stop(now + 0.3);
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(2000 + Math.random() * 500, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, this.audioContext.currentTime + 0.2);
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.2);
   }
   
   private playDemogorgonRoar(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Deep layered roar
+    // Multi-layered roar
     const osc1 = this.audioContext.createOscillator();
     osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(60, now);
+    osc1.frequency.setValueAtTime(80, this.audioContext.currentTime);
     
     const osc2 = this.audioContext.createOscillator();
     osc2.type = 'square';
-    osc2.frequency.setValueAtTime(120, now);
+    osc2.frequency.setValueAtTime(120, this.audioContext.currentTime);
     
-    // Distortion
     const distortion = this.audioContext.createWaveShaper();
     distortion.curve = this.makeDistortionCurve(200);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume * 0.4, now + 0.1);
-    gain.gain.setValueAtTime(volume * 0.4, now + 0.5);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 1);
+    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(volume * 0.4, this.audioContext.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
     
     osc1.connect(distortion);
     osc2.connect(distortion);
     distortion.connect(gain);
     gain.connect(this.audioContext.destination);
     
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 1);
-    osc2.stop(now + 1);
+    osc1.start();
+    osc2.start();
+    osc1.stop(this.audioContext.currentTime + 0.8);
+    osc2.stop(this.audioContext.currentTime + 0.8);
   }
   
-  private playMindFlayerPsychic(): void {
+  // ===========================================================================
+  // PLAYER SOUNDS
+  // ===========================================================================
+  
+  private playPlayerDamage(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Otherworldly psychic attack
+    // Low thump
     const osc1 = this.audioContext.createOscillator();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(200, now);
+    osc1.frequency.setValueAtTime(100, this.audioContext.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(40, this.audioContext.currentTime + 0.2);
     
+    const gain1 = this.audioContext.createGain();
+    gain1.gain.setValueAtTime(volume * 0.5, this.audioContext.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
+    
+    // High ping
     const osc2 = this.audioContext.createOscillator();
     osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(203, now); // Slight detuning for beating
+    osc2.frequency.setValueAtTime(1200, this.audioContext.currentTime);
     
-    const lfo = this.audioContext.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(5, now);
+    const gain2 = this.audioContext.createGain();
+    gain2.gain.setValueAtTime(volume * 0.1, this.audioContext.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.15);
     
-    const lfoGain = this.audioContext.createGain();
-    lfoGain.gain.setValueAtTime(50, now);
+    osc1.connect(gain1);
+    gain1.connect(this.audioContext.destination);
+    osc2.connect(gain2);
+    gain2.connect(this.audioContext.destination);
     
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc1.frequency);
-    
-    const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume * 0.3, now + 0.2);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
-    
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(this.audioContext.destination);
-    
-    osc1.start(now);
-    osc2.start(now);
-    lfo.start(now);
-    osc1.stop(now + 0.8);
-    osc2.stop(now + 0.8);
-    lfo.stop(now + 0.8);
+    osc1.start();
+    osc2.start();
+    osc1.stop(this.audioContext.currentTime + 0.2);
+    osc2.stop(this.audioContext.currentTime + 0.15);
   }
   
-  // ---------------------------------------------------------------------------
-  // ENVIRONMENT SFX
-  // ---------------------------------------------------------------------------
+  private playPlayerHeal(): void {
+    if (!this.audioContext) return;
+    const volume = this.masterVolume * this.sfxVolume;
+    
+    // Warm, rising tones
+    const notes = [392, 493.88, 587.33]; // G4, B4, D5
+    notes.forEach((freq, i) => {
+      setTimeout(() => {
+        if (!this.audioContext) return;
+        const osc = this.audioContext.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(volume * 0.15, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.3);
+      }, i * 100);
+    });
+  }
+  
+  private playFootstep(): void {
+    if (!this.audioContext) return;
+    const volume = this.masterVolume * this.sfxVolume * 0.5;
+    
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(80 + Math.random() * 20, this.audioContext.currentTime);
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.08);
+    
+    osc.connect(gain);
+    gain.connect(this.audioContext.destination);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.08);
+  }
+  
+  // ===========================================================================
+  // ENVIRONMENT SOUNDS
+  // ===========================================================================
   
   private playPortalOpen(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Rising whoosh
+    // Reality tear sound
     const osc = this.audioContext.createOscillator();
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(50, now);
-    osc.frequency.exponentialRampToValueAtTime(500, now + 0.5);
+    osc.frequency.setValueAtTime(100, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(2000, this.audioContext.currentTime + 0.3);
+    osc.frequency.exponentialRampToValueAtTime(200, this.audioContext.currentTime + 0.5);
     
     const filter = this.audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(100, now);
-    filter.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+    filter.Q.setValueAtTime(5, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume * 0.3, now + 0.3);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(volume * 0.3, this.audioContext.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
     
     osc.connect(filter);
     filter.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    osc.stop(now + 0.6);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.5);
   }
   
   private playPortalHum(): void {
+    // Just a brief hum burst
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     const osc = this.audioContext.createOscillator();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(80, now);
+    osc.frequency.setValueAtTime(80, this.audioContext.currentTime);
     
     const lfo = this.audioContext.createOscillator();
-    lfo.type = 'sine';
-    lfo.frequency.setValueAtTime(3, now);
-    
+    lfo.frequency.setValueAtTime(5, this.audioContext.currentTime);
     const lfoGain = this.audioContext.createGain();
-    lfoGain.gain.setValueAtTime(20, now);
-    
+    lfoGain.gain.setValueAtTime(10, this.audioContext.currentTime);
     lfo.connect(lfoGain);
     lfoGain.connect(osc.frequency);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 2);
+    gain.gain.setValueAtTime(volume * 0.1, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
     
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    lfo.start(now);
-    osc.stop(now + 2);
-    lfo.stop(now + 2);
+    osc.start();
+    lfo.start();
+    osc.stop(this.audioContext.currentTime + 0.5);
+    lfo.stop(this.audioContext.currentTime + 0.5);
   }
   
   private playHiveSpawn(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     // Wet emergence
     const bufferSize = this.audioContext.sampleRate * 0.4;
@@ -1281,8 +1090,7 @@ export class AudioManager {
     const data = buffer.getChannelData(0);
     
     for (let i = 0; i < bufferSize; i++) {
-      const t = i / bufferSize;
-      data[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI * 2) * (1 - t);
+      data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
     }
     
     const noise = this.audioContext.createBufferSource();
@@ -1290,358 +1098,234 @@ export class AudioManager {
     
     const filter = this.audioContext.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(500, now);
+    filter.frequency.setValueAtTime(500, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.25, now);
+    gain.gain.setValueAtTime(volume * 0.25, this.audioContext.currentTime);
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    noise.start(now);
+    noise.start();
   }
   
   private playHiveDestroy(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Explosion + splatter
-    const bufferSize = this.audioContext.sampleRate * 0.5;
+    // Explosive splatter
+    const bufferSize = this.audioContext.sampleRate * 0.3;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
     
     for (let i = 0; i < bufferSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.2));
     }
     
     const noise = this.audioContext.createBufferSource();
     noise.buffer = buffer;
     
-    // Low boom
-    const osc = this.audioContext.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(100, now);
-    osc.frequency.exponentialRampToValueAtTime(30, now + 0.3);
-    
-    const oscGain = this.audioContext.createGain();
-    oscGain.gain.setValueAtTime(volume * 0.5, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    
-    const noiseGain = this.audioContext.createGain();
-    noiseGain.gain.setValueAtTime(volume * 0.3, now);
-    
-    noise.connect(noiseGain);
-    noiseGain.connect(this.audioContext.destination);
-    osc.connect(oscGain);
-    oscGain.connect(this.audioContext.destination);
-    
-    noise.start(now);
-    osc.start(now);
-    osc.stop(now + 0.3);
-  }
-  
-  // ---------------------------------------------------------------------------
-  // PLAYER SFX
-  // ---------------------------------------------------------------------------
-  
-  private playPlayerDamage(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
-    // Low thump
-    const osc1 = this.audioContext.createOscillator();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(100, now);
-    osc1.frequency.exponentialRampToValueAtTime(40, now + 0.2);
-    
-    const gain1 = this.audioContext.createGain();
-    gain1.gain.setValueAtTime(volume * 0.5, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    
-    // High ping
-    const osc2 = this.audioContext.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1200, now);
-    
-    const gain2 = this.audioContext.createGain();
-    gain2.gain.setValueAtTime(volume * 0.1, now);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    
-    osc1.connect(gain1);
-    gain1.connect(this.audioContext.destination);
-    osc2.connect(gain2);
-    gain2.connect(this.audioContext.destination);
-    
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.2);
-    osc2.stop(now + 0.15);
-  }
-  
-  private playPlayerHeal(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
-    // Warm ascending tone
-    const osc = this.audioContext.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(300, now);
-    osc.frequency.linearRampToValueAtTime(600, now + 0.3);
-    
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume * 0.15, now + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    gain.gain.setValueAtTime(volume * 0.4, this.audioContext.currentTime);
     
-    osc.connect(gain);
+    noise.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    osc.stop(now + 0.4);
+    noise.start();
   }
   
-  private playFootstep(): void {
-    if (!this.audioContext) return;
-    
-    const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
-    // Simple thud with variation
-    const freq = 80 + Math.random() * 40;
-    
-    const osc = this.audioContext.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, now);
-    osc.frequency.exponentialRampToValueAtTime(30, now + 0.05);
-    
-    const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.1, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-    
-    osc.connect(gain);
-    gain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    osc.stop(now + 0.08);
-  }
-  
-  // ---------------------------------------------------------------------------
-  // UI SFX
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // UI / PICKUP SOUNDS
+  // ===========================================================================
   
   private playPickup(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
     const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
     
     notes.forEach((freq, i) => {
       const osc = this.audioContext!.createOscillator();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + i * 0.1);
+      osc.frequency.setValueAtTime(freq, this.audioContext!.currentTime + i * 0.1);
       
       const gain = this.audioContext!.createGain();
-      gain.gain.setValueAtTime(0, now + i * 0.1);
-      gain.gain.linearRampToValueAtTime(volume * 0.15, now + i * 0.1 + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.3);
+      gain.gain.setValueAtTime(0, this.audioContext!.currentTime + i * 0.1);
+      gain.gain.linearRampToValueAtTime(volume * 0.15, this.audioContext!.currentTime + i * 0.1 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext!.currentTime + i * 0.1 + 0.3);
       
       osc.connect(gain);
       gain.connect(this.audioContext!.destination);
       
-      osc.start(now + i * 0.1);
-      osc.stop(now + i * 0.1 + 0.3);
+      osc.start(this.audioContext!.currentTime + i * 0.1);
+      osc.stop(this.audioContext!.currentTime + i * 0.1 + 0.3);
     });
   }
   
   private playEvidenceFound(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Emotional discovery - longer, more meaningful
-    const notes = [392, 440, 523.25, 659.25]; // G4, A4, C5, E5
+    // Emotional discovery - special sound
+    const notes = [392, 493.88, 587.33, 783.99]; // G4, B4, D5, G5
     
     notes.forEach((freq, i) => {
-      const osc = this.audioContext!.createOscillator();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, now + i * 0.2);
-      
-      const gain = this.audioContext!.createGain();
-      gain.gain.setValueAtTime(0, now + i * 0.2);
-      gain.gain.linearRampToValueAtTime(volume * 0.2, now + i * 0.2 + 0.1);
-      gain.gain.setValueAtTime(volume * 0.18, now + i * 0.2 + 0.4);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.2 + 0.8);
-      
-      osc.connect(gain);
-      gain.connect(this.audioContext!.destination);
-      
-      osc.start(now + i * 0.2);
-      osc.stop(now + i * 0.2 + 0.8);
+      setTimeout(() => {
+        if (!this.audioContext) return;
+        const osc = this.audioContext.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(volume * 0.2, this.audioContext.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.8);
+      }, i * 150);
     });
   }
   
   private playWeaponPickup(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Empowering metal clang
-    const osc1 = this.audioContext.createOscillator();
-    osc1.type = 'triangle';
-    osc1.frequency.setValueAtTime(800, now);
+    // Metallic equip sound
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.1);
     
-    const osc2 = this.audioContext.createOscillator();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(1600, now);
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.setValueAtTime(500, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    gain.gain.setValueAtTime(volume * 0.25, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.2);
     
-    osc1.connect(gain);
-    osc2.connect(gain);
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.4);
-    osc2.stop(now + 0.4);
-    
-    // Then pickup chime
-    setTimeout(() => this.playPickup(), 200);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.2);
   }
   
   private playObjectiveComplete(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     // Achievement fanfare
-    const notes = [392, 523.25, 659.25, 783.99]; // G4, C5, E5, G5
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
     
     notes.forEach((freq, i) => {
-      const osc = this.audioContext!.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + i * 0.08);
-      
-      const gain = this.audioContext!.createGain();
-      gain.gain.setValueAtTime(0, now + i * 0.08);
-      gain.gain.linearRampToValueAtTime(volume * 0.18, now + i * 0.08 + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.5);
-      
-      osc.connect(gain);
-      gain.connect(this.audioContext!.destination);
-      
-      osc.start(now + i * 0.08);
-      osc.stop(now + i * 0.08 + 0.5);
+      setTimeout(() => {
+        if (!this.audioContext) return;
+        const osc = this.audioContext.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+        
+        const gain = this.audioContext.createGain();
+        gain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.4);
+      }, i * 120);
     });
   }
   
-  // ---------------------------------------------------------------------------
-  // VECNA/HORROR SFX
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
+  // HORROR / VECNA SOUNDS
+  // ===========================================================================
   
   private playClockTick(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
     const osc = this.audioContext.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(1000, now);
+    osc.frequency.setValueAtTime(1000, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.15, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    gain.gain.setValueAtTime(volume * 0.3, this.audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.05);
     
     osc.connect(gain);
     gain.connect(this.audioContext.destination);
-    
-    osc.start(now);
-    osc.stop(now + 0.05);
+    osc.start();
+    osc.stop(this.audioContext.currentTime + 0.05);
   }
   
   private playClockChime(): void {
     if (!this.audioContext) return;
     
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Four deep chimes
+    // Four deep chimes - Vecna's signature
     for (let i = 0; i < 4; i++) {
       const osc = this.audioContext.createOscillator();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(220, now + i * 0.8); // A3
+      osc.frequency.setValueAtTime(220, this.audioContext.currentTime + i * 0.8); // A3
       
       const gain = this.audioContext.createGain();
-      gain.gain.setValueAtTime(0, now + i * 0.8);
-      gain.gain.linearRampToValueAtTime(volume * 0.3, now + i * 0.8 + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.8 + 0.7);
+      gain.gain.setValueAtTime(0, this.audioContext.currentTime + i * 0.8);
+      gain.gain.linearRampToValueAtTime(volume * 0.3, this.audioContext.currentTime + i * 0.8 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + i * 0.8 + 0.7);
       
       osc.connect(gain);
       gain.connect(this.audioContext.destination);
       
-      osc.start(now + i * 0.8);
-      osc.stop(now + i * 0.8 + 0.7);
+      osc.start(this.audioContext.currentTime + i * 0.8);
+      osc.stop(this.audioContext.currentTime + i * 0.8 + 0.7);
     }
   }
   
   private playVecnaTeleport(): void {
     if (!this.audioContext) return;
-    
     const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
     
-    // Reality tear
+    // Reality tear + void whoosh
     const osc1 = this.audioContext.createOscillator();
     osc1.type = 'sawtooth';
-    osc1.frequency.setValueAtTime(100, now);
-    osc1.frequency.exponentialRampToValueAtTime(2000, now + 0.2);
-    osc1.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+    osc1.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+    osc1.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.4);
     
-    const distortion = this.audioContext.createWaveShaper();
-    distortion.curve = this.makeDistortionCurve(150);
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(30, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(volume * 0.25, now + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(volume * 0.35, this.audioContext.currentTime + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.5);
     
-    osc1.connect(distortion);
-    distortion.connect(gain);
+    osc1.connect(gain);
+    osc2.connect(gain);
     gain.connect(this.audioContext.destination);
     
-    osc1.start(now);
-    osc1.stop(now + 0.5);
+    osc1.start();
+    osc2.start();
+    osc1.stop(this.audioContext.currentTime + 0.5);
+    osc2.stop(this.audioContext.currentTime + 0.5);
   }
   
   private playVecnaWhisper(): void {
     if (!this.audioContext) return;
+    const volume = this.masterVolume * this.voiceVolume;
     
-    const volume = this.masterVolume * this.sfxVolume;
-    const now = this.audioContext.currentTime;
-    
-    // Eerie whisper effect
-    const bufferSize = this.audioContext.sampleRate * 1.5;
+    // Eerie whisper-like sound
+    const bufferSize = this.audioContext.sampleRate * 1.0;
     const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
     const data = buffer.getChannelData(0);
     
     for (let i = 0; i < bufferSize; i++) {
-      const t = i / bufferSize;
-      data[i] = (Math.random() * 2 - 1) * Math.sin(t * Math.PI) * 0.3;
+      const t = i / this.audioContext.sampleRate;
+      data[i] = (Math.random() * 2 - 1) * 0.3 * Math.sin(t * Math.PI);
     }
     
     const noise = this.audioContext.createBufferSource();
@@ -1649,21 +1333,61 @@ export class AudioManager {
     
     const filter = this.audioContext.createBiquadFilter();
     filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(1000, now);
-    filter.Q.setValueAtTime(5, now);
+    filter.frequency.setValueAtTime(800, this.audioContext.currentTime);
+    filter.Q.setValueAtTime(10, this.audioContext.currentTime);
     
     const gain = this.audioContext.createGain();
-    gain.gain.setValueAtTime(volume * 0.15, now);
+    gain.gain.setValueAtTime(volume * 0.2, this.audioContext.currentTime);
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(this.audioContext.destination);
+    noise.start();
+  }
+  
+  private playMindFlayerPsychic(): void {
+    if (!this.audioContext) return;
+    const volume = this.masterVolume * this.sfxVolume;
     
-    noise.start(now);
+    // Inside-your-head distorted sound
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(150, this.audioContext.currentTime);
+    
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(153, this.audioContext.currentTime); // Slight detune for dissonance
+    
+    const lfo = this.audioContext.createOscillator();
+    lfo.frequency.setValueAtTime(8, this.audioContext.currentTime);
+    const lfoGain = this.audioContext.createGain();
+    lfoGain.gain.setValueAtTime(30, this.audioContext.currentTime);
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    
+    const distortion = this.audioContext.createWaveShaper();
+    distortion.curve = this.makeDistortionCurve(150);
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gain.gain.linearRampToValueAtTime(volume * 0.3, this.audioContext.currentTime + 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.8);
+    
+    osc1.connect(distortion);
+    osc2.connect(distortion);
+    distortion.connect(gain);
+    gain.connect(this.audioContext.destination);
+    
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    osc1.stop(this.audioContext.currentTime + 0.8);
+    osc2.stop(this.audioContext.currentTime + 0.8);
+    lfo.stop(this.audioContext.currentTime + 0.8);
   }
   
   // ===========================================================================
-  // UTILITIES
+  // UTILITY FUNCTIONS
   // ===========================================================================
   
   private makeDistortionCurve(amount: number): Float32Array {
@@ -1679,27 +1403,11 @@ export class AudioManager {
   }
   
   // ===========================================================================
-  // SOUND LOADING (for when audio files are available)
+  // UPDATE
   // ===========================================================================
   
-  public loadSound(
-    name: string, 
-    url: string, 
-    options: { loop?: boolean; autoplay?: boolean; volume?: number } = {}
-  ): void {
-    const sound = new Sound(
-      name,
-      url,
-      this.scene,
-      null,
-      {
-        loop: options.loop || false,
-        autoplay: options.autoplay || false,
-        volume: (options.volume || 1) * this.masterVolume,
-      }
-    );
-    
-    this.sounds.set(name, sound);
+  public update(_deltaTime: number): void {
+    // Could be used for dynamic audio based on game state
   }
   
   // ===========================================================================
@@ -1728,6 +1436,14 @@ export class AudioManager {
     // Update ambient drone volume
     if (this.ambientGain && this.audioContext) {
       this.ambientGain.gain.setValueAtTime(
+        this.masterVolume * this.musicVolume * 0.1,
+        this.audioContext.currentTime
+      );
+    }
+    
+    // Update combat music volume
+    if (this.combatGain && this.audioContext) {
+      this.combatGain.gain.setValueAtTime(
         this.masterVolume * this.musicVolume * 0.15,
         this.audioContext.currentTime
       );
@@ -1740,16 +1456,21 @@ export class AudioManager {
   }
   
   // ===========================================================================
-  // UPDATE & LIFECYCLE
+  // GETTERS
   // ===========================================================================
   
-  public update(deltaTime: number): void {
-    // Could be used for dynamic audio based on game state
-  }
+  public getMasterVolume(): number { return this.masterVolume; }
+  public getMusicVolume(): number { return this.musicVolume; }
+  public getSFXVolume(): number { return this.sfxVolume; }
+  public getVoiceVolume(): number { return this.voiceVolume; }
+  public getCurrentMusicState(): MusicState { return this.musicState; }
+  
+  // ===========================================================================
+  // CLEANUP
+  // ===========================================================================
   
   public dispose(): void {
     this.stopMusic();
-    this.stopAllOscillators();
     this.sounds.forEach((sound) => sound.dispose());
     this.sounds.clear();
     
