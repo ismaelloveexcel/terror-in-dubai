@@ -367,6 +367,10 @@ const App: React.FC = () => {
             {/* Mobile Controls */}
             <div id="mobile-controls" className={gameState === 'playing' ? 'visible' : 'hidden'}>
                 <div id="joystick-zone"></div>
+                <button id="pause-btn" onClick={() => {
+                    setGameState('paused');
+                    gameRef.current?.pause();
+                }}>⏸</button>
                 <div id="action-buttons">
                     <button id="fire-btn">FIRE</button>
                     <button id="interact-btn">USE</button>
