@@ -1,11 +1,19 @@
 /**
  * SAVE ISMAEL - Express Server
  * Serves assets and provides API endpoints
+ * 
+ * Security enhancements included:
+ * - Helmet for secure HTTP headers
+ * - Rate limiting on API endpoints
+ * - CORS with configurable origins
+ * - Input validation
  */
 
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -19,10 +27,59 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Security: Helmet for secure HTTP headers
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Babylon.js
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "blob:"],
+            connectSrc: ["'self'", "ws:", "wss:"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
+            workerSrc: ["'self'", "blob:"],
+        },
+    },
+    crossOriginEmbedderPolicy: false, // Required for Babylon.js asset loading
+}));
+
+// Security: Rate limiting for API endpoints
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: {
+        error: 'Too many requests',
+        message: 'Too many requests from this IP, please try again after 15 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Apply rate limiting to API routes
+app.use('/api', apiLimiter);
+
+// CORS configuration
+const corsOptions = {
+    origin: process.env.CORS_ORIGIN || '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+    maxAge: 86400, // 24 hours
+};
+app.use(cors(corsOptions));
+
 // Middleware
-app.use(cors());
 app.use(compression());
-app.use(express.json());
+app.use(express.json({ limit: '10kb' })); // Limit payload size
+
+// Input validation helper
+const validatePlayerId = (playerId) => {
+    if (!playerId || typeof playerId !== 'string') return false;
+    // Allow only alphanumeric characters, max 64 chars (security: no hyphens to prevent path traversal)
+    return /^[a-zA-Z0-9]{1,64}$/.test(playerId);
+};
 
 // Static assets with caching
 app.use('/assets', express.static(path.join(__dirname, '../assets'), {
@@ -48,7 +105,7 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         game: 'SAVE ISMAEL',
-        version: '1.0.0',
+        version: '2.0.0',
         timestamp: new Date().toISOString()
     });
 });
@@ -86,6 +143,15 @@ app.get('/api/assets', (req, res) => {
 // Get asset URL by ID
 app.get('/api/assets/:id', (req, res) => {
     const { id } = req.params;
+    
+    // Validate asset ID format (UUID format: 8-4-4-4-12)
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        return res.status(400).json({
+            error: 'Invalid asset ID format',
+            message: 'Asset ID must be a valid UUID'
+        });
+    }
+    
     res.json({
         id,
         url: `/assets/${id}.glb`
@@ -94,8 +160,22 @@ app.get('/api/assets/:id', (req, res) => {
 
 // Save progress (for future implementation)
 app.post('/api/progress/save', (req, res) => {
-    // In a real implementation, this would save to a database
     const { playerId, progress } = req.body;
+    
+    // Validate input
+    if (!validatePlayerId(playerId)) {
+        return res.status(400).json({
+            error: 'Invalid player ID',
+            message: 'Player ID must be alphanumeric and max 64 characters'
+        });
+    }
+    
+    if (!progress || typeof progress !== 'object') {
+        return res.status(400).json({
+            error: 'Invalid progress data',
+            message: 'Progress must be a valid object'
+        });
+    }
     
     console.log(`Saving progress for player: ${playerId}`);
     
@@ -109,6 +189,14 @@ app.post('/api/progress/save', (req, res) => {
 // Load progress
 app.get('/api/progress/:playerId', (req, res) => {
     const { playerId } = req.params;
+    
+    // Validate player ID
+    if (!validatePlayerId(playerId)) {
+        return res.status(400).json({
+            error: 'Invalid player ID',
+            message: 'Player ID must be alphanumeric and max 64 characters'
+        });
+    }
     
     // In a real implementation, this would load from a database
     res.json({
@@ -155,13 +243,15 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
+    const env = (process.env.NODE_ENV || 'development').slice(0, 19).padEnd(19);
     console.log('');
     console.log('╔════════════════════════════════════════╗');
     console.log('║          SAVE ISMAEL SERVER            ║');
     console.log('║    An Upside Down Dubai Adventure      ║');
     console.log('╠════════════════════════════════════════╣');
-    console.log(`║  Server running on port ${PORT}            ║`);
-    console.log(`║  Environment: ${process.env.NODE_ENV || 'development'}              ║`);
+    console.log(`║  Server running on port ${String(PORT).padEnd(14)}║`);
+    console.log(`║  Environment: ${env}║`);
+    console.log('║  Security: Helmet + Rate Limiting      ║');
     console.log('╚════════════════════════════════════════╝');
     console.log('');
     console.log(`Health: http://localhost:${PORT}/api/health`);

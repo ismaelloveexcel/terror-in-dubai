@@ -9,16 +9,14 @@ import {
     MeshBuilder, 
     StandardMaterial, 
     Color3, 
+    Color4,
     HemisphericLight,
     PointLight,
     DirectionalLight,
-    ShadowGenerator,
-    FreeCamera,
     Mesh,
     ParticleSystem,
-    Texture
 } from '@babylonjs/core';
-import { EnemyManager, WaveConfig, SpawnConfig } from '../enemies/EnemyManager';
+import { EnemyManager } from '../enemies/EnemyManager';
 
 export interface LevelConfig {
     id: number;
@@ -132,7 +130,7 @@ export abstract class Level {
         this.scene.fogDensity = this.config.fogDensity;
         
         // Clear color (sky)
-        this.scene.clearColor = new BABYLON.Color4(
+        this.scene.clearColor = new Color4(
             this.config.fogColor.r * 0.5,
             this.config.fogColor.g * 0.5,
             this.config.fogColor.b * 0.5,
@@ -195,9 +193,9 @@ export abstract class Level {
         glow.minLifeTime = 0.5;
         glow.maxLifeTime = 1;
         glow.emitRate = 20;
-        glow.color1 = new BABYLON.Color4(1, 0.8, 0, 1);
-        glow.color2 = new BABYLON.Color4(1, 0.6, 0, 0.5);
-        glow.colorDead = new BABYLON.Color4(1, 0.4, 0, 0);
+        glow.color1 = new Color4(1, 0.8, 0, 1);
+        glow.color2 = new Color4(1, 0.6, 0, 0.5);
+        glow.colorDead = new Color4(1, 0.4, 0, 0);
         glow.gravity = new Vector3(0, 0.5, 0);
         glow.start();
         
