@@ -87,32 +87,32 @@ export abstract class Enemy implements IEnemy, IDamageable {
   
   protected abstract createMesh(): Mesh;
   
-  protected createFallbackMesh(config: typeof fallbackMeshes.demodog): Mesh {
+  protected createFallbackMesh(config: { type: string; color: string; emissive: string; width?: number; height?: number; depth?: number; diameter?: number; radius?: number }): Mesh {
     let mesh: Mesh;
     
     switch (config.type) {
       case 'box':
         mesh = MeshBuilder.CreateBox(`enemy_${this.type}`, {
-          width: config.width,
-          height: config.height,
-          depth: config.depth,
+          width: config.width || 1,
+          height: config.height || 1,
+          depth: config.depth || 1,
         }, this.scene);
         break;
       case 'sphere':
         mesh = MeshBuilder.CreateSphere(`enemy_${this.type}`, {
-          diameter: config.diameter,
+          diameter: config.diameter || 1,
         }, this.scene);
         break;
       case 'capsule':
         mesh = MeshBuilder.CreateCapsule(`enemy_${this.type}`, {
-          height: config.height,
-          radius: config.radius,
+          height: config.height || 2,
+          radius: config.radius || 0.5,
         }, this.scene);
         break;
       case 'cylinder':
         mesh = MeshBuilder.CreateCylinder(`enemy_${this.type}`, {
-          height: config.height,
-          diameter: config.diameter,
+          height: config.height || 2,
+          diameter: config.diameter || 1,
         }, this.scene);
         break;
       default:
@@ -238,6 +238,10 @@ export abstract class Enemy implements IEnemy, IDamageable {
   
   public isDead(): boolean {
     return this.health <= 0;
+  }
+  
+  public get isAlive(): boolean {
+    return !this.isDead() && !this.isDying;
   }
   
   // ===========================================================================

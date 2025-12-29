@@ -3,8 +3,9 @@
  * The lieutenant of Vecna - a terrifying psychic entity
  */
 
-import { Enemy, EnemyConfig } from './Enemy';
-import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, ParticleSystem, Texture, Animation, Sound } from '@babylonjs/core';
+import { Enemy } from './Enemy';
+import { EnemyType } from '../types';
+import { Scene, Vector3, Mesh, MeshBuilder, StandardMaterial, Color3, ParticleSystem, Texture, Animation, Color4 } from '@babylonjs/core';
 
 interface MindFlayerPhase {
     name: string;
@@ -51,7 +52,7 @@ export class MindFlayer extends Enemy {
     private tentacles: any[] = [];
     private psychicAura: ParticleSystem | null = null;
     private lastAttackTime: number = 0;
-    private attackCooldown: number = 3000;
+    private bossAttackCooldown: number = 3000;
     private isPerformingAttack: boolean = false;
     private minionsSpawned: number = 0;
     private maxMinions: number = 6;
@@ -62,24 +63,24 @@ export class MindFlayer extends Enemy {
     private dialogueCooldown: number = 15000;
     
     constructor(scene: Scene, position: Vector3) {
-        const config: EnemyConfig = {
-            name: 'Mind Flayer',
-            health: 2000,
-            maxHealth: 2000,
-            damage: 40,
-            speed: 1.5,
-            detectionRange: 50,
-            attackRange: 25,
-            type: 'boss'
-        };
-        
-        super(scene, position, config);
-        this.createMindFlayerMesh();
+        super(scene, EnemyType.MIND_FLAYER, position);
+        this.initializeBossMesh();
         this.createPsychicAura();
         this.initializeTentacles();
     }
     
-    private createMindFlayerMesh(): void {
+    protected createMesh(): Mesh {
+        // Create a simple placeholder mesh - the actual mesh is created in initializeBossMesh
+        const placeholder = MeshBuilder.CreateSphere('mindFlayerPlaceholder', { diameter: 0.1 }, this.scene);
+        placeholder.isVisible = false;
+        return placeholder;
+    }
+    
+    protected updateMovement(deltaTime: number): void {
+        // Boss doesn't follow standard movement - handled in update override
+    }
+    
+    private initializeBossMesh(): void {
         // Main body - large floating entity
         const body = MeshBuilder.CreateSphere('mindFlayerBody', {
             diameter: 4,
@@ -215,9 +216,9 @@ export class MindFlayer extends Enemy {
         this.psychicAura.minEmitBox = new Vector3(-3, -3, -3);
         this.psychicAura.maxEmitBox = new Vector3(3, 3, 3);
         
-        this.psychicAura.color1 = new BABYLON.Color4(0.5, 0, 0.8, 0.8);
-        this.psychicAura.color2 = new BABYLON.Color4(0.8, 0, 1, 0.6);
-        this.psychicAura.colorDead = new BABYLON.Color4(0.2, 0, 0.3, 0);
+        this.psychicAura.color1 = new Color4(0.5, 0, 0.8, 0.8);
+        this.psychicAura.color2 = new Color4(0.8, 0, 1, 0.6);
+        this.psychicAura.colorDead = new Color4(0.2, 0, 0.3, 0);
         
         this.psychicAura.minSize = 0.3;
         this.psychicAura.maxSize = 0.8;
@@ -232,21 +233,24 @@ export class MindFlayer extends Enemy {
         this.psychicAura.start();
     }
     
-    public update(deltaTime: number, playerPosition: Vector3): void {
-        if (!this.isAlive || !this.mesh) return;
+    public override update(deltaTime: number): void {
+        if (this.isDead() || !this.mesh) return;
+        
+        // Call parent update for basic functionality
+        super.update(deltaTime);
         
         // Update phase based on health
         this.updatePhase();
         
-        // Face the player
-        this.lookAtPlayer(playerPosition);
-        
         // Handle attacks
         const now = Date.now();
+        const playerPosition = this.target;
+        if (!playerPosition) return;
+        
         const distanceToPlayer = Vector3.Distance(this.mesh.position, playerPosition);
         
-        if (distanceToPlayer <= this.config.attackRange && !this.isPerformingAttack) {
-            if (now - this.lastAttackTime >= this.attackCooldown) {
+        if (distanceToPlayer <= this.attackRange && !this.isPerformingAttack) {
+            if (now - this.lastAttackTime >= this.bossAttackCooldown) {
                 this.performAttack(playerPosition);
                 this.lastAttackTime = now;
             }
@@ -255,8 +259,11 @@ export class MindFlayer extends Enemy {
         // Slow movement towards player
         if (distanceToPlayer > 10 && !this.isPerformingAttack) {
             const direction = playerPosition.subtract(this.mesh.position).normalize();
-            this.mesh.position.addInPlace(direction.scale(this.config.speed * deltaTime * 0.001));
+            this.mesh.position.addInPlace(direction.scale(this.speed * deltaTime * 0.001));
         }
+        
+        // Face the player
+        this.lookAtPlayer(playerPosition);
         
         // Trigger dialogue
         if (now - this.lastDialogueTime >= this.dialogueCooldown) {
@@ -266,7 +273,7 @@ export class MindFlayer extends Enemy {
     }
     
     private updatePhase(): void {
-        const healthPercent = this.config.health / this.config.maxHealth;
+        const healthPercent = this.health / this.maxHealth;
         
         for (let i = this.phases.length - 1; i >= 0; i--) {
             if (healthPercent <= this.phases[i].healthThreshold) {
@@ -283,7 +290,7 @@ export class MindFlayer extends Enemy {
         console.log(`Mind Flayer enters phase: ${this.phases[phase].name}`);
         
         // Increase aggression with each phase
-        this.attackCooldown = Math.max(1500, 3000 - (phase * 500));
+        this.bossAttackCooldown = Math.max(1500, 3000 - (phase * 500));
         
         // Trigger phase dialogue
         const dialogue = this.phases[phase].dialogue[0];
@@ -366,7 +373,7 @@ export class MindFlayer extends Enemy {
         
         // Emit damage event
         window.dispatchEvent(new CustomEvent('mindFlayerAttack', {
-            detail: { type: 'psychicWave', damage: this.config.damage, range: 15 }
+            detail: { type: 'psychicWave', damage: this.damage, range: 15 }
         }));
     }
     
@@ -380,7 +387,7 @@ export class MindFlayer extends Enemy {
         });
         
         window.dispatchEvent(new CustomEvent('mindFlayerAttack', {
-            detail: { type: 'tentacleStrike', damage: this.config.damage * 0.5 }
+            detail: { type: 'tentacleStrike', damage: this.damage * 0.5 }
         }));
     }
     
@@ -423,7 +430,7 @@ export class MindFlayer extends Enemy {
         }
         
         window.dispatchEvent(new CustomEvent('mindFlayerAttack', {
-            detail: { type: 'psychicStorm', damage: this.config.damage * 0.3 }
+            detail: { type: 'psychicStorm', damage: this.damage * 0.3 }
         }));
     }
     
@@ -479,17 +486,16 @@ export class MindFlayer extends Enemy {
         }
     }
     
-    public takeDamage(amount: number): boolean {
-        const died = super.takeDamage(amount);
+    public override takeDamage(amount: number): void {
+        const wasDead = this.isDead();
+        super.takeDamage(amount);
         
-        if (died) {
-            this.onDeath();
+        if (!wasDead && this.isDead()) {
+            this.onBossDeath();
         }
-        
-        return died;
     }
     
-    private onDeath(): void {
+    private onBossDeath(): void {
         console.log('Mind Flayer defeated!');
         
         // Final dialogue

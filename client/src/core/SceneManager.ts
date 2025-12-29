@@ -9,7 +9,6 @@ import {
   HemisphericLight,
   DirectionalLight,
   ShadowGenerator,
-  FogMode,
   GlowLayer,
   DefaultRenderingPipeline,
   DepthOfFieldEffectBlurLevel,
@@ -87,7 +86,7 @@ export class SceneManager {
   public setupFog(): void {
     if (!visualConfig.fog.enabled) return;
     
-    this.scene.fogMode = FogMode.EXP2;
+    this.scene.fogMode = Scene.FOGMODE_EXP2;
     this.scene.fogDensity = visualConfig.fog.density;
     this.scene.fogColor = new Color3(
       visualConfig.fog.color.r,

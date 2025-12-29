@@ -120,8 +120,9 @@ export class WeaponSystem {
     
     // Position at barrel tip
     if (this.weaponMesh) {
-      this.muzzleFlash.emitter = new Vector3(0, 0, 0.15);
-      this.muzzleFlash.parent = this.weaponMesh;
+      this.muzzleFlash.emitter = this.weaponMesh;
+      this.muzzleFlash.minEmitBox = new Vector3(0, 0, 0.15);
+      this.muzzleFlash.maxEmitBox = new Vector3(0, 0, 0.15);
     }
     
     // Particle settings
@@ -292,7 +293,7 @@ export class WeaponSystem {
   // GETTERS
   // ===========================================================================
   
-  public getCurrentWeapon(): IWeapon {
+  public getCurrentWeapon(): WeaponState {
     return { ...this.currentWeapon };
   }
   

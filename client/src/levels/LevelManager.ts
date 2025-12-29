@@ -236,9 +236,11 @@ export class LevelManager {
     /**
      * Update current level
      */
-    public update(deltaTime: number, playerPosition: Vector3): void {
+    public update(deltaTime: number, playerPosition?: Vector3): void {
         if (this.currentLevel && !this.isTransitioning) {
-            this.currentLevel.update(deltaTime, playerPosition);
+            // Pass player position if available, otherwise use a default
+            const pos = playerPosition || new Vector3(0, 0, 0);
+            this.currentLevel.update(deltaTime, pos);
         }
     }
     
@@ -321,6 +323,29 @@ export class LevelManager {
     public resetProgress(): void {
         this.initializeProgress();
         localStorage.removeItem('saveIsmael_progress');
+    }
+    
+    /**
+     * Check if current level is complete
+     */
+    public isLevelComplete(): boolean {
+        if (!this.currentLevel) return false;
+        return this.currentLevel.getIsComplete();
+    }
+    
+    /**
+     * Get player start position (alias for getPlayerSpawnPoint)
+     */
+    public getPlayerStartPosition(): Vector3 {
+        return this.getPlayerSpawnPoint();
+    }
+    
+    /**
+     * Set the player reference (for levels that need it)
+     */
+    public setPlayer(player: any): void {
+        // Store player reference if levels need it
+        // This is a placeholder for compatibility
     }
     
     /**

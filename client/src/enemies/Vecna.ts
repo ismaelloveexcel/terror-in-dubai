@@ -4,8 +4,9 @@
  * Four-phase boss fight with memory-based mechanics
  */
 
-import { Enemy, EnemyConfig } from './Enemy';
-import { Scene, Vector3, MeshBuilder, StandardMaterial, Color3, ParticleSystem, Animation, PointLight } from '@babylonjs/core';
+import { Enemy } from './Enemy';
+import { EnemyType } from '../types';
+import { Scene, Vector3, Mesh, MeshBuilder, StandardMaterial, Color3, ParticleSystem, Animation, PointLight, Color4, Texture } from '@babylonjs/core';
 
 interface VecnaPhase {
     name: string;
@@ -72,7 +73,7 @@ export class Vecna extends Enemy {
     
     // Combat state
     private lastAttackTime: number = 0;
-    private attackCooldown: number = 2500;
+    private bossAttackCooldown: number = 2500;
     private isPerformingAttack: boolean = false;
     private mindFlayerEchoActive: boolean = false;
     private isVulnerable: boolean = false;
@@ -88,24 +89,24 @@ export class Vecna extends Enemy {
     private uncleFreed: boolean = false;
     
     constructor(scene: Scene, position: Vector3) {
-        const config: EnemyConfig = {
-            name: 'Vecna - The Sovereign',
-            health: 5000,
-            maxHealth: 5000,
-            damage: 60,
-            speed: 2.0,
-            detectionRange: 100,
-            attackRange: 40,
-            type: 'boss'
-        };
-        
-        super(scene, position, config);
-        this.createVecnaMesh();
+        super(scene, EnemyType.VECNA, position);
+        this.initializeVecnaMesh();
         this.createVoidAura();
         this.createClockMechanic();
     }
     
-    private createVecnaMesh(): void {
+    protected createMesh(): Mesh {
+        // Create a simple placeholder mesh - the actual mesh is created in initializeVecnaMesh
+        const placeholder = MeshBuilder.CreateSphere('vecnaPlaceholder', { diameter: 0.1 }, this.scene);
+        placeholder.isVisible = false;
+        return placeholder;
+    }
+    
+    protected updateMovement(deltaTime: number): void {
+        // Boss doesn't follow standard movement - handled in update override
+    }
+    
+    private initializeVecnaMesh(): void {
         // Humanoid base - tall and imposing
         const torso = MeshBuilder.CreateCylinder('vecnaTorso', {
             height: 3,
@@ -263,9 +264,9 @@ export class Vecna extends Enemy {
         this.voidAura.minEmitBox = new Vector3(-2, -2, -2);
         this.voidAura.maxEmitBox = new Vector3(2, 4, 2);
         
-        this.voidAura.color1 = new BABYLON.Color4(0.5, 0, 0, 0.8);
-        this.voidAura.color2 = new BABYLON.Color4(0.2, 0, 0.1, 0.6);
-        this.voidAura.colorDead = new BABYLON.Color4(0.1, 0, 0, 0);
+        this.voidAura.color1 = new Color4(0.5, 0, 0, 0.8);
+        this.voidAura.color2 = new Color4(0.2, 0, 0.1, 0.6);
+        this.voidAura.colorDead = new Color4(0.1, 0, 0, 0);
         
         this.voidAura.minSize = 0.1;
         this.voidAura.maxSize = 0.4;
@@ -328,18 +329,25 @@ export class Vecna extends Enemy {
         this.scene.beginAnimation(this.clockHand, 0, 300, true);
     }
     
-    public update(deltaTime: number, playerPosition: Vector3): void {
-        if (!this.isAlive || !this.mesh) return;
+    public override update(deltaTime: number): void {
+        if (this.isDead() || !this.mesh) return;
+        
+        // Call parent update for basic functionality
+        super.update(deltaTime);
         
         this.updatePhase();
+        
+        const playerPosition = this.target;
+        if (!playerPosition) return;
+        
         this.lookAtPlayer(playerPosition);
         
         const now = Date.now();
         const distanceToPlayer = Vector3.Distance(this.mesh.position, playerPosition);
         
         // Handle attacks
-        if (!this.isPerformingAttack && now - this.lastAttackTime >= this.attackCooldown) {
-            if (distanceToPlayer <= this.config.attackRange) {
+        if (!this.isPerformingAttack && now - this.lastAttackTime >= this.bossAttackCooldown) {
+            if (distanceToPlayer <= this.attackRange) {
                 this.performAttack(playerPosition);
                 this.lastAttackTime = now;
             }
@@ -348,7 +356,7 @@ export class Vecna extends Enemy {
         // Slow, menacing approach
         if (distanceToPlayer > 8 && !this.isPerformingAttack) {
             const direction = playerPosition.subtract(this.mesh.position).normalize();
-            this.mesh.position.addInPlace(direction.scale(this.config.speed * deltaTime * 0.001));
+            this.mesh.position.addInPlace(direction.scale(this.speed * deltaTime * 0.001));
         }
         
         // Phase-specific updates
@@ -368,7 +376,7 @@ export class Vecna extends Enemy {
     }
     
     private updatePhase(): void {
-        const healthPercent = this.config.health / this.config.maxHealth;
+        const healthPercent = this.health / this.maxHealth;
         
         for (let i = this.phases.length - 1; i >= 0; i--) {
             if (healthPercent <= this.phases[i].healthThreshold) {
@@ -397,7 +405,7 @@ export class Vecna extends Enemy {
         }
         
         // Increase aggression
-        this.attackCooldown = Math.max(1500, 2500 - (phase * 300));
+        this.bossAttackCooldown = Math.max(1500, 2500 - (phase * 300));
         
         // Visual intensity increase
         if (this.voidAura) {
@@ -528,7 +536,7 @@ export class Vecna extends Enemy {
         }
         
         window.dispatchEvent(new CustomEvent('vecnaAttack', {
-            detail: { type: 'telekineticThrow', damage: this.config.damage * 0.4 }
+            detail: { type: 'telekineticThrow', damage: this.damage * 0.4 }
         }));
     }
     
@@ -550,7 +558,7 @@ export class Vecna extends Enemy {
             
             if (Vector3.Distance(bolt.position, playerPosition) < 1.5) {
                 window.dispatchEvent(new CustomEvent('vecnaAttack', {
-                    detail: { type: 'voidBolt', damage: this.config.damage * 0.6, hit: true }
+                    detail: { type: 'voidBolt', damage: this.damage * 0.6, hit: true }
                 }));
                 clearInterval(moveInterval);
                 bolt.dispose();
@@ -624,7 +632,7 @@ export class Vecna extends Enemy {
         }
         
         window.dispatchEvent(new CustomEvent('vecnaAttack', {
-            detail: { type: 'fearProjection', damage: this.config.damage * 0.3 }
+            detail: { type: 'fearProjection', damage: this.damage * 0.3 }
         }));
     }
     
@@ -664,7 +672,7 @@ export class Vecna extends Enemy {
         }
         
         window.dispatchEvent(new CustomEvent('vecnaAttack', {
-            detail: { type: 'voidStorm', damage: this.config.damage * 0.2 }
+            detail: { type: 'voidStorm', damage: this.damage * 0.2 }
         }));
     }
     
@@ -720,7 +728,7 @@ export class Vecna extends Enemy {
             window.dispatchEvent(new CustomEvent('vecnaAttack', {
                 detail: { 
                     type: 'voidRift', 
-                    damage: this.config.damage * 0.1,
+                    damage: this.damage * 0.1,
                     position: rift.position,
                     radius: 4
                 }
@@ -764,7 +772,7 @@ export class Vecna extends Enemy {
         window.dispatchEvent(new CustomEvent('vecnaAttack', {
             detail: { 
                 type: 'voidCollapse', 
-                damage: this.config.damage * 1.5,
+                damage: this.damage * 1.5,
                 warning: 3000,
                 safeSpots: [
                     new Vector3(10, 0, 10),
@@ -780,7 +788,7 @@ export class Vecna extends Enemy {
             detail: { 
                 type: 'finalGrasp', 
                 requiresMemoryCounter: true,
-                damage: this.config.damage * 2
+                damage: this.damage * 2
             }
         }));
         
@@ -812,7 +820,7 @@ export class Vecna extends Enemy {
         }
     }
     
-    public takeDamage(amount: number): boolean {
+    public override takeDamage(amount: number): void {
         // In Phase 4, Vecna has temporary invulnerability
         if (this.currentPhase === 3 && !this.isVulnerable && !this.uncleFreed) {
             window.dispatchEvent(new CustomEvent('bossDialogue', {
@@ -821,16 +829,15 @@ export class Vecna extends Enemy {
                     text: "HAHAHA! You cannot hurt me while I hold your uncle!" 
                 }
             }));
-            return false;
+            return;
         }
         
-        const died = super.takeDamage(amount);
+        const wasDead = this.isDead();
+        super.takeDamage(amount);
         
-        if (died) {
-            this.onDeath();
+        if (!wasDead && this.isDead()) {
+            this.onBossDeath();
         }
-        
-        return died;
     }
     
     public freeUncle(): void {
@@ -852,7 +859,7 @@ export class Vecna extends Enemy {
         }
     }
     
-    private onDeath(): void {
+    private onBossDeath(): void {
         console.log('Vecna has been defeated!');
         
         // Final dialogue

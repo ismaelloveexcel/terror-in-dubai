@@ -16,6 +16,7 @@ import {
     ParticleSystem
 } from '@babylonjs/core';
 import { Level, LevelConfig } from './Level';
+import { WaveConfig } from '../enemies/EnemyManager';
 
 export class Level6_BurjKhalifa extends Level {
     private tower: Mesh[] = [];

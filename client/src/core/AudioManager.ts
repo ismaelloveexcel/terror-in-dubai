@@ -360,7 +360,7 @@ export class AudioManager {
     }
   }
   
-  private makeDistortionCurve(amount: number): Float32Array {
+  private makeDistortionCurve(amount: number): Float32Array<ArrayBuffer> {
     const samples = 44100;
     const curve = new Float32Array(samples);
     
@@ -369,7 +369,7 @@ export class AudioManager {
       curve[i] = ((3 + amount) * x * 20 * (Math.PI / 180)) / (Math.PI + amount * Math.abs(x));
     }
     
-    return curve;
+    return curve as Float32Array<ArrayBuffer>;
   }
   
   // ===========================================================================
