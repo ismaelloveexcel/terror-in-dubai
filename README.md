@@ -92,6 +92,14 @@ cd ../server
 NODE_ENV=production npm start
 ```
 
+### Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment options including:
+- **Railway** (Recommended) - Easiest full-stack deployment
+- **Render** - Free tier available
+- **Vercel + Railway** - Maximum performance split deployment
+- **AWS/Google Cloud** - Enterprise options
+
 ## 📁 Project Structure
 
 ```
