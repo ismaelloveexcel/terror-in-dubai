@@ -40,17 +40,25 @@ export interface IDamageable {
   isDead(): boolean;
 }
 
-export interface IEnemy extends IEntity, IDamageable {
-  type: EnemyType;
+export interface IEnemy {
+  mesh: Mesh;
+  type: string;
+  health: number;
+  maxHealth: number;
   damage: number;
   speed: number;
   attackRange: number;
-  detectionRange: number;
-  isAlerted: boolean;
+  isAlive: boolean;
+  isDying: boolean;
   target: Vector3 | null;
   
+  update(deltaTime: number, playerPosition: Vector3): void;
+  takeDamage(amount: number): void;
+  die(): void;
+  dispose(): void;
+  
   onDeath?: () => void;
-  onAttack?: (damage: number) => void;
+  onAttack?: (callback: (damage: number) => void) => void;
 }
 
 export interface IBoss extends IEnemy {
@@ -130,10 +138,17 @@ export interface IObjective {
   isCurrent: boolean;
 }
 
-export interface ISpawner extends IEntity {
-  spawnEnemy(): IEnemy;
+export interface ISpawner {
+  mesh: Mesh;
+  position: Vector3;
+  isActive: boolean;
   isDestroyed: boolean;
-  takeDamage(amount: number): void;
+  
+  spawn(): void;
+  update(deltaTime: number): void;
+  takeDamage?(amount: number): void;
+  destroy(): void;
+  dispose(): void;
 }
 
 // =============================================================================

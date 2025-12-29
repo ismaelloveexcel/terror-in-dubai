@@ -178,6 +178,22 @@ export const weaponConfig = {
 };
 
 // =============================================================================
+// ENEMY TYPES - Constants for type-safe enemy references
+// =============================================================================
+
+export const ENEMY_TYPES = {
+  DEMODOG: 'demodog',
+  DEMOBAT: 'demobat',
+  DEMOGORGON: 'demogorgon',
+  SWARM: 'swarm',
+  FLYING: 'flying',
+  ELITE: 'elite',
+  BOSS: 'boss',
+  MIND_FLAYER: 'mindFlayer',
+  VECNA: 'vecna',
+} as const;
+
+// =============================================================================
 // ENEMY CONFIGURATION
 // =============================================================================
 
@@ -235,7 +251,51 @@ export const enemyConfig = {
     phases: 4,
     points: 5000,
   },
+  // New enemy types for spawners
+  swarm: {
+    name: 'Swarm Creature',
+    health: 25,
+    damage: 5,
+    speed: 5,
+    attackRange: 1.5,
+    attackCooldown: 1,
+    detectionRange: 15,
+    points: 50,
+  },
+  flying: {
+    name: 'Flying Terror',
+    health: 35,
+    damage: 8,
+    speed: 6,
+    attackRange: 2,
+    attackCooldown: 2,
+    detectionRange: 25,
+    points: 75,
+  },
+  elite: {
+    name: 'Elite Horror',
+    health: 200,
+    damage: 30,
+    speed: 2.5,
+    attackRange: 3,
+    attackCooldown: 1.5,
+    detectionRange: 35,
+    points: 300,
+  },
+  boss: {
+    name: 'Boss',
+    health: 500,
+    damage: 25,
+    speed: 2,
+    attackRange: 5,
+    attackCooldown: 3,
+    detectionRange: 50,
+    points: 1000,
+  },
 };
+
+// Type-safe alias for enemy configs
+export const enemyConfigs = enemyConfig;
 
 // =============================================================================
 // LEVEL CONFIGURATION

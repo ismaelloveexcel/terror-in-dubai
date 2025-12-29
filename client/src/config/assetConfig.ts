@@ -261,11 +261,25 @@ export const assetConfig = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // WEAPONS
+  // WEAPONS (Aidan's Nephew's Custom Creations!)
   // ═══════════════════════════════════════════════════════════════════════════
   weapons: {
     pistol: '',
     muzzleFlash: '',
+    // Custom weapons made by Aidan's nephew!
+    katanaStaff: '/assets/weapons/katana_staff.glb',
+    nailBat: '/assets/weapons/nail_bat.glb',
+    nailBatAlt: '/assets/weapons/nail_bat_alt.glb',
+    spikyShield: '/assets/weapons/spiky_shield.glb',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PORTALS (Dimensional Rift Spawners)
+  // ═══════════════════════════════════════════════════════════════════════════
+  portals: {
+    bluePortal: '/assets/portals/blue_portal.glb',       // 1.3 MB - Blue dimensional rift
+    standardPortal: '/assets/portals/portal_standard.glb', // 7.2 MB - Standard Upside Down portal
+    largePortal: '/assets/portals/portal_large.glb',      // 8.7 MB - Large boss portal
   },
 
   // ═══════════════════════════════════════════════════════════════════════════

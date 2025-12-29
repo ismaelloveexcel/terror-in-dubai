@@ -15,12 +15,18 @@ import {
 } from '@babylonjs/core';
 import { Level, LevelConfig } from './Level';
 import { WaveConfig, SpawnConfig } from '../enemies/EnemyManager';
+import { PortalSpawner } from '../spawners/PortalSpawner';
+import { AssetLoader } from '../utils/AssetLoader';
 
 export class Level1_IbnBattuta extends Level {
     private mallCorridor: Mesh[] = [];
     private persiaArch: Mesh | null = null;
     private fountain: Mesh | null = null;
     private shops: Mesh[] = [];
+    private weaponPickup: Mesh | null = null;
+    private weaponCollected: boolean = false;
+    private portalSpawner: PortalSpawner | null = null;
+    private assetLoader: AssetLoader;
     
     constructor(scene: Scene) {
         const config: LevelConfig = {
@@ -43,6 +49,7 @@ export class Level1_IbnBattuta extends Level {
         
         this.playerSpawnPoint = new Vector3(0, 1, -30);
         this.exitPoint = new Vector3(0, 1, 60);
+        this.assetLoader = new AssetLoader(scene);
     }
     
     protected getEvidenceConfig(): { position: Vector3 } {
@@ -77,6 +84,108 @@ export class Level1_IbnBattuta extends Level {
         
         // Add corruption elements
         this.addCorruption();
+        
+        // Add Aidan's Nail Bat weapon pickup!
+        this.createWeaponPickup();
+        
+        // Create a blue portal spawner (tutorial portal)
+        this.createTutorialPortal();
+    }
+    
+    /**
+     * Create a blue dimensional portal - introduces players to the portal mechanic
+     */
+    private createTutorialPortal(): void {
+        // Place portal near the mid-section of the mall
+        this.portalSpawner = new PortalSpawner(
+            new Vector3(10, 0, 25),
+            this.scene,
+            this.assetLoader,
+            (enemy) => {
+                // Register spawned enemies with the enemy manager
+                // This connects portal spawns to the main enemy system
+                console.log('Portal spawned enemy:', enemy.type);
+            },
+            'blue' // Tutorial uses blue portal (smaller, less threatening)
+        );
+        
+        // Reduce spawn rate for tutorial
+        // Portal will spawn enemies more slowly to not overwhelm new players
+    }
+    
+    /**
+     * Create Aidan's Nail Bat as a pickup weapon!
+     * This special weapon was designed by Aidan himself.
+     */
+    private createWeaponPickup(): void {
+        // Create glowing pedestal for the weapon
+        const pedestal = MeshBuilder.CreateCylinder('weaponPedestal', {
+            height: 0.5,
+            diameter: 1,
+            tessellation: 16
+        }, this.scene);
+        pedestal.position = new Vector3(-8, 0.25, 30);
+        
+        const pedestalMat = new StandardMaterial('pedestalMat', this.scene);
+        pedestalMat.diffuseColor = new Color3(0.1, 0.1, 0.15);
+        pedestalMat.emissiveColor = new Color3(0, 0.05, 0.1);
+        pedestal.material = pedestalMat;
+        this.environmentMeshes.push(pedestal);
+        
+        // Weapon representation (will be replaced by actual model)
+        this.weaponPickup = MeshBuilder.CreateBox('nailBatPickup', {
+            width: 0.15,
+            height: 0.15,
+            depth: 1.2
+        }, this.scene);
+        this.weaponPickup.position = new Vector3(-8, 1.2, 30);
+        this.weaponPickup.rotation.z = Math.PI / 6;
+        
+        const weaponMat = new StandardMaterial('nailBatMat', this.scene);
+        weaponMat.diffuseColor = new Color3(0.4, 0.25, 0.15);
+        weaponMat.emissiveColor = new Color3(0.1, 0.05, 0);
+        this.weaponPickup.material = weaponMat;
+        this.environmentMeshes.push(this.weaponPickup);
+        
+        // Add spikes to represent nails
+        for (let i = 0; i < 8; i++) {
+            const spike = MeshBuilder.CreateCylinder(`spike_${i}`, {
+                height: 0.15,
+                diameterTop: 0.01,
+                diameterBottom: 0.03,
+                tessellation: 6
+            }, this.scene);
+            spike.parent = this.weaponPickup;
+            spike.position = new Vector3(
+                (Math.random() - 0.5) * 0.1,
+                0.1,
+                (i - 3.5) * 0.12
+            );
+            spike.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.3;
+            
+            const spikeMat = new StandardMaterial(`spikeMat_${i}`, this.scene);
+            spikeMat.diffuseColor = new Color3(0.5, 0.5, 0.5);
+            spike.material = spikeMat;
+        }
+        
+        // Glowing pickup light
+        const pickupLight = new PointLight('weaponLight', new Vector3(-8, 2, 30), this.scene);
+        pickupLight.diffuse = new Color3(0, 1, 1);
+        pickupLight.intensity = 2;
+        pickupLight.range = 5;
+        this.lights.push(pickupLight);
+        
+        // Floating/rotating animation
+        let time = 0;
+        this.scene.onBeforeRenderObservable.add(() => {
+            if (this.weaponPickup && !this.weaponCollected) {
+                time += 0.02;
+                this.weaponPickup.position.y = 1.2 + Math.sin(time) * 0.15;
+                this.weaponPickup.rotation.y += 0.01;
+            }
+        });
+        
+        // Pickup prompt text would be shown by UI
     }
     
     private createMallCorridor(): void {
@@ -417,6 +526,59 @@ export class Level1_IbnBattuta extends Level {
                 this.enemyManager.startNextWave();
             }
         }
+        
+        // Check for weapon pickup - Aidan's Nail Bat!
+        if (!this.weaponCollected && this.weaponPickup) {
+            const distanceToWeapon = Vector3.Distance(playerPosition, this.weaponPickup.position);
+            
+            if (distanceToWeapon < 2) {
+                this.collectWeaponPickup();
+            }
+        }
+    }
+    
+    /**
+     * Collect Aidan's custom weapon!
+     */
+    private collectWeaponPickup(): void {
+        if (this.weaponCollected) return;
+        
+        this.weaponCollected = true;
+        
+        // Hide the pickup
+        if (this.weaponPickup) {
+            this.weaponPickup.setEnabled(false);
+        }
+        
+        // Dispatch weapon pickup event
+        window.dispatchEvent(new CustomEvent('weaponPickup', {
+            detail: {
+                weaponId: 'nail_bat',
+                weaponName: "Aidan's Nail Bat",
+                message: "You found AIDAN'S NAIL BAT! This fearsome weapon was designed by Aidan himself!",
+                createdBy: 'Aidan'
+            }
+        }));
+        
+        // Show special message for Aidan's weapon
+        window.dispatchEvent(new CustomEvent('storyEvent', {
+            detail: {
+                type: 'weaponFound',
+                message: "You found a weapon Aidan designed! The Nail Bat will help you fight through the Upside Down.",
+                important: true
+            }
+        }));
+    }
+    
+    /**
+     * Clean up portal spawner on level dispose
+     */
+    dispose(): void {
+        if (this.portalSpawner) {
+            this.portalSpawner.dispose();
+        }
+        this.assetLoader.dispose();
+        super.dispose();
     }
 }
 
