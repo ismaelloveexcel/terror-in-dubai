@@ -10,12 +10,12 @@ import {
     MeshBuilder, 
     StandardMaterial, 
     Color3,
+    Color4,
     PointLight,
     Mesh,
     ParticleSystem
 } from '@babylonjs/core';
 import { Level, LevelConfig } from './Level';
-import { WaveConfig } from '../enemies/EnemyManager';
 
 export class Level6_BurjKhalifa extends Level {
     private tower: Mesh[] = [];
@@ -268,9 +268,9 @@ export class Level6_BurjKhalifa extends Level {
         portalParticles.minEmitBox = new Vector3(-15, -15, 0);
         portalParticles.maxEmitBox = new Vector3(15, 15, 0);
         
-        portalParticles.color1 = new BABYLON.Color4(0.5, 0, 0.8, 1);
-        portalParticles.color2 = new BABYLON.Color4(0.8, 0, 0.3, 0.8);
-        portalParticles.colorDead = new BABYLON.Color4(0.1, 0, 0.2, 0);
+        portalParticles.color1 = new Color4(0.5, 0, 0.8, 1);
+        portalParticles.color2 = new Color4(0.8, 0, 0.3, 0.8);
+        portalParticles.colorDead = new Color4(0.1, 0, 0.2, 0);
         
         portalParticles.minSize = 0.3;
         portalParticles.maxSize = 1;

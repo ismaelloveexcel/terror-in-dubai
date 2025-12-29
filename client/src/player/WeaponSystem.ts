@@ -14,9 +14,16 @@ import {
   Color4,
 } from '@babylonjs/core';
 import { weaponConfig } from '../config/gameConfig';
-import { IWeapon } from '../types';
 
-interface WeaponState extends IWeapon {
+interface WeaponState {
+  name: string;
+  damage: number;
+  fireRate: number;
+  range: number;
+  magazineSize: number;
+  currentAmmo: number;
+  totalAmmo: number;
+  isReloading: boolean;
   lastFireTime: number;
   reloadStartTime: number;
 }
