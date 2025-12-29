@@ -42,23 +42,22 @@ export interface IDamageable {
 
 export interface IEnemy {
   mesh: Mesh;
-  type: string;
+  type: EnemyType | string;
   health: number;
   maxHealth: number;
   damage: number;
   speed: number;
   attackRange: number;
   isAlive: boolean;
-  isDying: boolean;
   target: Vector3 | null;
   
-  update(deltaTime: number, playerPosition: Vector3): void;
+  update(deltaTime: number): void;
   takeDamage(amount: number): void;
-  die(): void;
   dispose(): void;
+  setTarget(target: Vector3): void;
   
   onDeath?: () => void;
-  onAttack?: (callback: (damage: number) => void) => void;
+  onAttack?: (damage: number) => void;
 }
 
 export interface IBoss extends IEnemy {

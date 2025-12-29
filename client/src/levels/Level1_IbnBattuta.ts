@@ -571,14 +571,14 @@ export class Level1_IbnBattuta extends Level {
     }
     
     /**
-     * Clean up portal spawner on level dispose
+     * Clean up portal spawner on level unload
      */
-    dispose(): void {
+    public unload(): void {
         if (this.portalSpawner) {
             this.portalSpawner.dispose();
         }
         this.assetLoader.dispose();
-        super.dispose();
+        super.unload();
     }
 }
 

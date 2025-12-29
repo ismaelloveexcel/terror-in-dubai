@@ -1,39 +1,43 @@
 import { Scene, Mesh, Vector3, StandardMaterial, Color3, MeshBuilder, Animation, ParticleSystem, Texture, Color4 } from '@babylonjs/core';
-import { ISpawner, IEnemy } from '../types';
 import { AssetLoader } from '../utils/AssetLoader';
 import { SwarmEnemy } from '../enemies/SwarmEnemy';
 import { FlyingEnemy } from '../enemies/FlyingEnemy';
 import { EliteEnemy } from '../enemies/EliteEnemy';
+import { Enemy } from '../enemies/Enemy';
 import { performanceConfig } from '../config/gameConfig';
 
-/**
- * PortalSpawner - Special spawner using your nephew's portal models!
- * Creates dimensional rifts that spawn enemies from the Upside Down
- */
 export type PortalType = 'blue' | 'standard' | 'large';
 
-export class PortalSpawner implements ISpawner {
+export class PortalSpawner {
   public isActive: boolean = true;
   public isDestroyed: boolean = false;
   public mesh: Mesh;
   public health: number = 200;
+  public position: Vector3;
   
+  private scene: Scene;
+  private assetLoader: AssetLoader;
   private portalType: PortalType;
   private spawnTimer: number = 0;
-  private spawnInterval: number = 8; // Slower spawn rate than hive
+  private spawnInterval: number = 8;
   private maxEnemies: number = performanceConfig.maxEnemies;
-  private spawnedEnemies: IEnemy[] = [];
+  private spawnedEnemies: Enemy[] = [];
   private particleSystem: ParticleSystem | null = null;
   private portalRing: Mesh | null = null;
   private innerVortex: Mesh | null = null;
+  private onEnemySpawned: (enemy: Enemy) => void;
 
   constructor(
-    public position: Vector3,
-    private scene: Scene,
-    private assetLoader: AssetLoader,
-    private onEnemySpawned: (enemy: IEnemy) => void,
+    position: Vector3,
+    scene: Scene,
+    assetLoader: AssetLoader,
+    onEnemySpawned: (enemy: Enemy) => void,
     portalType: PortalType = 'standard'
   ) {
+    this.position = position.clone();
+    this.scene = scene;
+    this.assetLoader = assetLoader;
+    this.onEnemySpawned = onEnemySpawned;
     this.portalType = portalType;
     this.mesh = this.createPortalMesh();
     this.setupParticles();
@@ -41,14 +45,10 @@ export class PortalSpawner implements ISpawner {
   }
 
   private createPortalMesh(): Mesh {
-    // Create the portal visual - swirling vortex effect
-    const portalRoot = MeshBuilder.CreateDisc('portal_root', {
-      radius: 0.1
-    }, this.scene);
+    const portalRoot = MeshBuilder.CreateDisc('portal_root', { radius: 0.1 }, this.scene);
     portalRoot.position = this.position.clone();
     portalRoot.isVisible = false;
 
-    // Outer ring (glowing)
     const ringSize = this.portalType === 'large' ? 4 : this.portalType === 'blue' ? 2 : 3;
     this.portalRing = MeshBuilder.CreateTorus('portal_ring', {
       diameter: ringSize,
@@ -65,10 +65,7 @@ export class PortalSpawner implements ISpawner {
     ringMat.alpha = 0.9;
     this.portalRing.material = ringMat;
 
-    // Inner vortex disc
-    this.innerVortex = MeshBuilder.CreateDisc('portal_vortex', {
-      radius: ringSize / 2 - 0.2
-    }, this.scene);
+    this.innerVortex = MeshBuilder.CreateDisc('portal_vortex', { radius: ringSize / 2 - 0.2 }, this.scene);
     this.innerVortex.parent = portalRoot;
     this.innerVortex.rotation.x = Math.PI / 2;
     this.innerVortex.position.y = 0.1;
@@ -79,7 +76,6 @@ export class PortalSpawner implements ISpawner {
     vortexMat.alpha = 0.7;
     this.innerVortex.material = vortexMat;
 
-    // Position the portal vertically (standing upright)
     portalRoot.rotation.x = -Math.PI / 2;
     portalRoot.position.y = this.position.y + ringSize / 2;
 
@@ -88,20 +84,16 @@ export class PortalSpawner implements ISpawner {
 
   private getPortalColor(): Color3 {
     switch (this.portalType) {
-      case 'blue':
-        return new Color3(0.2, 0.4, 1.0); // Blue dimensional portal
-      case 'large':
-        return new Color3(1.0, 0.2, 0.1); // Red danger portal
-      case 'standard':
-      default:
-        return new Color3(0.5, 0.0, 0.8); // Purple Upside Down portal
+      case 'blue': return new Color3(0.2, 0.4, 1.0);
+      case 'large': return new Color3(1.0, 0.2, 0.1);
+      default: return new Color3(0.5, 0.0, 0.8);
     }
   }
 
   private setupParticles(): void {
     this.particleSystem = new ParticleSystem('portalParticles', 200, this.scene);
     
-    // Create procedural particle texture
+    // Use a simple texture
     const particleTexture = new Texture('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAABnSURBVFhH7c5BDQAgDATBxr9oIfgPA3tI4NqZ2c9nVBeBCCIQgQhEIAIRiEAEIhCBCEQgAhGIQAQiEIEIRCACEYhABCIQgQhEIAIRiEAEIhCBCEQgAhGIQAQiEIEIRCACEYjgL5j5AC1XFWU5ZjcuAAAAAElFTkSuQmCC', this.scene);
     this.particleSystem.particleTexture = particleTexture;
     
@@ -129,15 +121,8 @@ export class PortalSpawner implements ISpawner {
   }
 
   private setupAnimations(): void {
-    // Ring rotation animation
     if (this.portalRing) {
-      const rotationAnim = new Animation(
-        'portalRingRotation',
-        'rotation.z',
-        30,
-        Animation.ANIMATIONTYPE_FLOAT,
-        Animation.ANIMATIONLOOPMODE_CYCLE
-      );
+      const rotationAnim = new Animation('portalRingRotation', 'rotation.z', 30, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CYCLE);
       rotationAnim.setKeys([
         { frame: 0, value: 0 },
         { frame: 120, value: Math.PI * 2 }
@@ -146,15 +131,8 @@ export class PortalSpawner implements ISpawner {
       this.scene.beginAnimation(this.portalRing, 0, 120, true);
     }
 
-    // Vortex pulse animation
     if (this.innerVortex) {
-      const pulseAnim = new Animation(
-        'vortexPulse',
-        'scaling',
-        30,
-        Animation.ANIMATIONTYPE_VECTOR3,
-        Animation.ANIMATIONLOOPMODE_CYCLE
-      );
+      const pulseAnim = new Animation('vortexPulse', 'scaling', 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CYCLE);
       pulseAnim.setKeys([
         { frame: 0, value: new Vector3(1, 1, 1) },
         { frame: 30, value: new Vector3(1.1, 1.1, 1.1) },
@@ -171,35 +149,22 @@ export class PortalSpawner implements ISpawner {
     const aliveEnemies = this.spawnedEnemies.filter(e => e.isAlive);
     if (aliveEnemies.length >= this.maxEnemies) return;
 
-    // Spawn position is slightly in front of the portal
     const spawnPos = this.position.clone();
     spawnPos.z += 2;
     spawnPos.x += (Math.random() - 0.5) * 2;
     spawnPos.y = 0.5;
 
-    let enemy: IEnemy;
+    let enemy: Enemy;
 
-    // Different portals spawn different enemy types
     if (this.portalType === 'large') {
-      // Large portals spawn elite enemies
-      const mesh = this.assetLoader.createFallbackElite();
-      mesh.position = spawnPos;
-      enemy = new EliteEnemy(mesh, this.scene);
+      enemy = new EliteEnemy(this.scene, spawnPos);
     } else if (this.portalType === 'blue') {
-      // Blue portals spawn flying enemies
-      const mesh = this.assetLoader.createFallbackFlyingEnemy();
-      mesh.position = spawnPos;
-      enemy = new FlyingEnemy(mesh, this.scene);
+      enemy = new FlyingEnemy(this.scene, spawnPos);
     } else {
-      // Standard portals spawn swarm enemies
-      const mesh = this.assetLoader.createFallbackSwarmEnemy();
-      mesh.position = spawnPos;
-      enemy = new SwarmEnemy(mesh, this.scene);
+      enemy = new SwarmEnemy(this.scene, spawnPos);
     }
 
-    // Spawn effect - brief flash
     this.flashEffect();
-
     this.spawnedEnemies.push(enemy);
     this.onEnemySpawned(enemy);
   }
@@ -210,9 +175,7 @@ export class PortalSpawner implements ISpawner {
       if (mat) {
         const originalEmissive = mat.emissiveColor.clone();
         mat.emissiveColor = Color3.White();
-        setTimeout(() => {
-          mat.emissiveColor = originalEmissive;
-        }, 100);
+        setTimeout(() => { mat.emissiveColor = originalEmissive; }, 100);
       }
     }
   }
@@ -227,21 +190,17 @@ export class PortalSpawner implements ISpawner {
       this.spawnTimer = 0;
     }
 
-    // Clean up dead enemies
-    this.spawnedEnemies = this.spawnedEnemies.filter(e => e.isAlive || e.isDying);
+    this.spawnedEnemies = this.spawnedEnemies.filter(e => e.isAlive);
   }
 
   takeDamage(amount: number): void {
     this.health -= amount;
     
-    // Visual damage feedback
     if (this.portalRing) {
       const mat = this.portalRing.material as StandardMaterial;
       if (mat) {
         mat.emissiveColor = Color3.White();
-        setTimeout(() => {
-          mat.emissiveColor = this.getPortalColor().scale(0.8);
-        }, 50);
+        setTimeout(() => { mat.emissiveColor = this.getPortalColor().scale(0.8); }, 50);
       }
     }
 
@@ -255,25 +214,14 @@ export class PortalSpawner implements ISpawner {
     this.isDestroyed = true;
     this.isActive = false;
 
-    console.log(`Portal destroyed! Type: ${this.portalType}`);
-
-    // Collapse animation
     if (this.portalRing) {
-      const collapseAnim = new Animation(
-        'collapse',
-        'scaling',
-        30,
-        Animation.ANIMATIONTYPE_VECTOR3,
-        Animation.ANIMATIONLOOPMODE_CONSTANT
-      );
+      const collapseAnim = new Animation('collapse', 'scaling', 30, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CONSTANT);
       collapseAnim.setKeys([
         { frame: 0, value: this.portalRing.scaling.clone() },
         { frame: 30, value: Vector3.Zero() }
       ]);
       this.portalRing.animations = [collapseAnim];
-      this.scene.beginAnimation(this.portalRing, 0, 30, false, 1, () => {
-        this.dispose();
-      });
+      this.scene.beginAnimation(this.portalRing, 0, 30, false, 1, () => { this.dispose(); });
     } else {
       this.dispose();
     }
@@ -284,14 +232,8 @@ export class PortalSpawner implements ISpawner {
       this.particleSystem.stop();
       this.particleSystem.dispose();
     }
-    if (this.portalRing) {
-      this.portalRing.dispose();
-    }
-    if (this.innerVortex) {
-      this.innerVortex.dispose();
-    }
-    if (this.mesh) {
-      this.mesh.dispose();
-    }
+    if (this.portalRing) this.portalRing.dispose();
+    if (this.innerVortex) this.innerVortex.dispose();
+    if (this.mesh) this.mesh.dispose();
   }
 }

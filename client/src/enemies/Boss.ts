@@ -1,54 +1,81 @@
-import { Mesh, Vector3, Color3, Scene, MeshBuilder, StandardMaterial } from '@babylonjs/core';
+// Boss.ts - Phase-based boss with teleport and hazard zones
+// Save Ismael - Premium Enemy System
+
+import { 
+  Scene, 
+  Vector3, 
+  Mesh, 
+  MeshBuilder, 
+  StandardMaterial, 
+  Color3 
+} from '@babylonjs/core';
 import { Enemy } from './Enemy';
-import { enemyConfigs, ENEMY_TYPES } from '../config/gameConfig';
+import { EnemyType } from '../types';
 
 export type BossPhase = 1 | 2 | 3;
 
 export class Boss extends Enemy {
-  private attackCallback: ((damage: number) => void) | null = null;
-  private stunCallback: ((duration: number) => void) | null = null;
-
   public currentPhase: BossPhase = 1;
   public isStunned: boolean = false;
+  
   private stunTimer: number = 0;
-  private phaseChangeTimer: number = 0;
-
   private teleportPoints: Vector3[] = [];
   private teleportTimer: number = 0;
-
   private hazardTimer: number = 0;
   private hazardZones: Mesh[] = [];
+  private arenaCenter: Vector3;
+  private arenaRadius: number;
 
-  constructor(mesh: Mesh, scene: Scene, arenaCenter: Vector3, arenaRadius: number) {
-    const config = enemyConfigs[ENEMY_TYPES.BOSS];
-    super(mesh, ENEMY_TYPES.BOSS, config.speed, config.damage, config.attackRange, config.health, scene);
-
+  constructor(scene: Scene, position: Vector3, arenaCenter?: Vector3, arenaRadius?: number) {
+    super(scene, EnemyType.DEMOGORGON, position);
+    
+    this.arenaCenter = arenaCenter || position.clone();
+    this.arenaRadius = arenaRadius || 20;
+    
+    // Override stats for boss behavior
+    this.speed = 2;
+    this.damage = 25;
+    this.maxHealth = 500;
+    this.health = 500;
+    this.attackRange = 5;
+    this.attackCooldownMax = 3;
+    
     // Scale up massively
     this.mesh.scaling = new Vector3(2, 2, 2);
     this.mesh.position.y = 2;
-
+    
     // Setup teleport points
-    this.setupTeleportPoints(arenaCenter, arenaRadius);
+    this.setupTeleportPoints();
   }
 
-  protected getColor(): Color3 {
-    return new Color3(0.5, 0.1, 0.1); // Deep red
+  protected createMesh(): Mesh {
+    const mesh = MeshBuilder.CreateSphere('boss', {
+      diameter: 3,
+      segments: 16,
+    }, this.scene);
+    
+    const mat = new StandardMaterial('bossMat', this.scene);
+    mat.diffuseColor = new Color3(0.5, 0.1, 0.1);
+    mat.emissiveColor = new Color3(0.8, 0.2, 0.2);
+    mesh.material = mat;
+    
+    return mesh;
   }
 
-  private setupTeleportPoints(center: Vector3, radius: number): void {
+  private setupTeleportPoints(): void {
     const count = 6;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2;
       const point = new Vector3(
-        center.x + Math.cos(angle) * radius * 0.7,
-        center.y + 2,
-        center.z + Math.sin(angle) * radius * 0.7
+        this.arenaCenter.x + Math.cos(angle) * this.arenaRadius * 0.7,
+        this.arenaCenter.y + 2,
+        this.arenaCenter.z + Math.sin(angle) * this.arenaRadius * 0.7
       );
       this.teleportPoints.push(point);
     }
   }
 
-  protected updateMovement(deltaTime: number, playerPosition: Vector3): void {
+  protected updateMovement(deltaTime: number): void {
     if (this.isStunned) {
       this.stunTimer -= deltaTime;
       if (this.stunTimer <= 0) {
@@ -61,13 +88,13 @@ export class Boss extends Enemy {
 
     switch (this.currentPhase) {
       case 1:
-        this.phase1Behavior(deltaTime, playerPosition);
+        this.phase1Behavior(deltaTime);
         break;
       case 2:
-        this.phase2Behavior(deltaTime, playerPosition);
+        this.phase2Behavior(deltaTime);
         break;
       case 3:
-        this.phase3Behavior(deltaTime, playerPosition);
+        this.phase3Behavior(deltaTime);
         break;
     }
 
@@ -91,19 +118,21 @@ export class Boss extends Enemy {
 
   private onPhaseChange(): void {
     console.log(`Boss entered phase ${this.currentPhase}`);
-    // Visual effect
+    // Visual effect - pulse
     this.mesh.scaling.scaleInPlace(1.2);
     setTimeout(() => {
       this.mesh.scaling.scaleInPlace(1 / 1.2);
     }, 500);
   }
 
-  private phase1Behavior(deltaTime: number, playerPosition: Vector3): void {
+  private phase1Behavior(deltaTime: number): void {
+    if (!this.target) return;
     // Slow movement, ranged attacks, periodic stun opportunity
-    this.moveTowards(playerPosition, deltaTime * 0.5);
+    this.moveToward(this.target, deltaTime * 0.5);
   }
 
-  private phase2Behavior(deltaTime: number, playerPosition: Vector3): void {
+  private phase2Behavior(deltaTime: number): void {
+    if (!this.target) return;
     // Teleport behavior
     this.teleportTimer += deltaTime;
 
@@ -111,17 +140,18 @@ export class Boss extends Enemy {
       this.teleport();
       this.teleportTimer = 0;
     } else {
-      this.moveTowards(playerPosition, deltaTime * 0.7);
+      this.moveToward(this.target, deltaTime * 0.7);
     }
   }
 
-  private phase3Behavior(deltaTime: number, playerPosition: Vector3): void {
+  private phase3Behavior(deltaTime: number): void {
+    if (!this.target) return;
     // Fast movement + hazard zones
-    this.moveTowards(playerPosition, deltaTime);
+    this.moveToward(this.target, deltaTime);
 
     this.hazardTimer += deltaTime;
     if (this.hazardTimer > 6.0) {
-      this.createHazardZone(playerPosition);
+      this.createHazardZone();
       this.hazardTimer = 0;
     }
   }
@@ -129,15 +159,18 @@ export class Boss extends Enemy {
   private teleport(): void {
     const randomPoint = this.teleportPoints[Math.floor(Math.random() * this.teleportPoints.length)];
     this.mesh.position = randomPoint.clone();
+    this.position = randomPoint.clone();
   }
 
-  private createHazardZone(nearPosition: Vector3): void {
+  private createHazardZone(): void {
+    if (!this.target) return;
+    
     const hazard = MeshBuilder.CreateCylinder('hazard', {
       height: 0.1,
       diameter: 4
     }, this.scene);
 
-    hazard.position = nearPosition.clone();
+    hazard.position = this.target.clone();
     hazard.position.x += (Math.random() - 0.5) * 10;
     hazard.position.z += (Math.random() - 0.5) * 10;
     hazard.position.y = 0.05;
@@ -159,37 +192,14 @@ export class Boss extends Enemy {
     }, 3000);
   }
 
-  protected checkAttack(playerPosition: Vector3): void {
+  protected checkAttack(): void {
     if (this.isStunned) return;
-
-    if (this.isInAttackRange(playerPosition) && this.timeSinceLastAttack >= this.getAttackCooldown()) {
-      this.attack();
-      this.timeSinceLastAttack = 0;
-    }
-  }
-
-  protected getAttackCooldown(): number {
-    switch (this.currentPhase) {
-      case 1: return 3.0;
-      case 2: return 2.0;
-      case 3: return 1.5;
-      default: return 3.0;
-    }
-  }
-
-  private attack(): void {
-    if (this.attackCallback) {
-      this.attackCallback(this.damage);
-    }
+    super.checkAttack();
   }
 
   public stun(duration: number): void {
     this.isStunned = true;
     this.stunTimer = duration;
-
-    if (this.stunCallback) {
-      this.stunCallback(duration);
-    }
   }
 
   public isInHazardZone(position: Vector3): boolean {
@@ -205,17 +215,11 @@ export class Boss extends Enemy {
     return false;
   }
 
-  onAttack(callback: (damage: number) => void): void {
-    this.attackCallback = callback;
-  }
-
-  onStun(callback: (duration: number) => void): void {
-    this.stunCallback = callback;
-  }
-
-  dispose(): void {
+  public dispose(): void {
     this.hazardZones.forEach(h => h.dispose());
     this.hazardZones = [];
     super.dispose();
   }
 }
+
+export default Boss;
