@@ -7,14 +7,14 @@
 
 export const assetConfig = {
   // ═══════════════════════════════════════════════════════════════════════════
-  // ENEMIES
+  // ENEMIES (Mapped from existing Meshy.ai assets)
   // ═══════════════════════════════════════════════════════════════════════════
   enemies: {
-    demodog: '',      // Quadruped swarm enemy
-    demobat: '',      // Flying bat-like enemy
-    demogorgon: '',   // Tall humanoid elite
-    mindFlayer: '',   // Level 4 boss
-    vecna: '',        // Final boss
+    demodog: '019b6990-91e3-78a2-a5b3-1291e610b633',      // Void Stalker - 3.7 MB
+    demobat: '019b6990-9622-7588-8bb7-ef219121b5c1',      // Rift Flyer - 3.8 MB
+    demogorgon: '019b6990-9a67-7072-a0fa-88c7b92b3b93',   // Void Reaper - 3.9 MB
+    mindFlayer: '019b6a00-ef68-76eb-9820-97273eb1b774',   // Mind Flayer - 14.0 MB
+    vecna: '019b6990-9eb0-78a7-b171-c6ae4467fce2',        // The Sovereign - 5.1 MB
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -25,17 +25,17 @@ export const assetConfig = {
     vineMedium: '',
     vineLarge: '',
     vineHanging: '',
-    vineCluster: '',
+    vineCluster: '019b6990-a2f1-7072-9f02-cf6711208df2',   // Vine Cluster - 5.3 MB
     podSmall: '',
     podMedium: '',
     podLarge: '',
     podOpen: '',
     spreadFloor: '',
-    spreadWall: '',
+    spreadWall: '019b6990-afd0-7769-83c9-a0d490f8db36',    // Flesh Wall - 3.1 MB
     membraneDoor: '',
     growthCorner: '',
-    hiveSmall: '',
-    hiveLarge: '',
+    hiveSmall: '019b6990-8959-78a0-b2bb-07a545d27f3c',     // Hive Spawner - 4.9 MB
+    hiveLarge: '019b6a06-0bd9-7b86-9869-c8c152ed17d8',     // Corruption Node - 9.8 MB
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -102,8 +102,8 @@ export const assetConfig = {
   // ═══════════════════════════════════════════════════════════════════════════
   level2: {
     hero: {
-      trainCar: '',        // Metro train exterior
-      stationPlatform: '', // Platform with infected ceiling
+      trainCar: '019b6a0b-678c-73c5-bbe7-cfa9f845f069',        // Metro train - 11.3 MB
+      stationPlatform: '019b6990-b40f-7588-858d-4f00e4871ca0', // Metro Pillar/Platform - 5.9 MB
     },
     modular: {
       tunnelWall: '',
@@ -164,15 +164,15 @@ export const assetConfig = {
   // ═══════════════════════════════════════════════════════════════════════════
   level4: {
     hero: {
-      yachtCapsized: '',   // Overturned luxury yacht
-      marinaTowerBase: '', // Base of tilted tower
+      yachtCapsized: '019b6a11-a5bf-797d-8b3b-ff7c2b9b08fa',   // Capsized yacht - 15.9 MB
+      marinaTowerBase: '019b6a17-e214-7d3f-bf62-3ecb298c938e', // Marina tower - 16.5 MB
     },
     modular: {
       dockPlank: '',
       dockPlankBroken: '',
       railingMarina: '',
       restaurantFront: '',
-      palmTreeDead: '',
+      palmTreeDead: '019b6990-b853-7077-8a2f-7f3a1728863d',    // Dead Palm Tree - 6.1 MB
       palmTreeInfected: '',
       waterfrontWall: '',
       boatCleat: '',
@@ -245,17 +245,19 @@ export const assetConfig = {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // COLLECTIBLES / EVIDENCE
+  // Note: Using procedural generation (Babylon.js primitives) for evidence items
   // ═══════════════════════════════════════════════════════════════════════════
   evidence: {
-    carKeys: '',
-    parkingTicket: '',
-    wallet: '',
-    photo: '',
-    crackedPhone: '',
-    watch: '',
-    giftBag: '',
-    phone: '',
-    voiceRecorder: '',
+    carKeys: 'PROCEDURAL_KEYS',          // Level 1 - Gold metallic keys
+    parkingTicket: 'PROCEDURAL_PAPER',   // Level 1 - White paper slip
+    wallet: 'PROCEDURAL_WALLET',         // Level 2 - Brown leather wallet
+    photo: 'PROCEDURAL_PHOTO',           // Level 2 - Family photo
+    crackedPhone: 'PROCEDURAL_PHONE',    // Level 3 - Cracked phone screen
+    watch: 'PROCEDURAL_WATCH',           // Level 4 - Stopped at 7:42 PM
+    giftBag: 'PROCEDURAL_BAG',           // Level 5 - Birthday gift bag
+    note: 'PROCEDURAL_NOTE',             // Level 5 - Handwritten note
+    voiceRecorder: 'PROCEDURAL_RECORDER',// Level 6 - Final recording
+    memoryFragment: '019b6990-ab70-7588-9a63-353df34e1460', // Memory Fragment - 3.1 MB
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -272,6 +274,14 @@ export const assetConfig = {
   ui: {
     healthPack: '',
     ammoPack: '',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MISC ENVIRONMENT (Mapped from remaining Meshy assets)
+  // ═══════════════════════════════════════════════════════════════════════════
+  environment: {
+    riftAnchor: '019b6990-8d9d-78a2-98f8-b2a673b06ff6',     // Rift Anchor - 3.4 MB
+    sporeCloud: '019b6990-a72f-78a7-931a-effc48600868',     // Spore Cloud - 5.4 MB
   },
 };
 

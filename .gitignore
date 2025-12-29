@@ -41,5 +41,10 @@ coverage/
 *.tsbuildinfo
 .eslintcache
 
+# Core dumps
+*.core
+core
+client/core
+
 # Large asset files (served separately)
-# server/assets/*.glb  # Commented - we want to track these
+server/assets/*.glb
