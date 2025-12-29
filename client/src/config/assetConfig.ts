@@ -20,6 +20,7 @@ export const assetConfig = {
     // PREMIUM GLB MODELS (Local assets)
     // ═══════════════════════════════════════════════════════════════════════════
     demogorgonV2: '/assets/enemies/demogorgon_v2.glb',           // 770 KB - Alternate Demogorgon
+    demogorgonDetailed: '/assets/enemies/demogorgon_detailed.glb', // 26 MB - High-detail Demogorgon
     eclipsedEmergence: '/assets/enemies/eclipsed_emergence.glb', // 3.5 MB - Eclipsed creature
     mindflayerGlb: '/assets/enemies/mindflayer.glb',             // 4.2 MB - Mind Flayer model
     vecnaV1: '/assets/enemies/vecna_v1.glb',                     // 11 MB - Vecna Primary model
@@ -290,6 +291,7 @@ export const assetConfig = {
     bluePortal: '/assets/portals/blue_portal.glb',       // 1.3 MB - Blue dimensional rift
     standardPortal: '/assets/portals/portal_standard.glb', // 7.2 MB - Standard Upside Down portal
     largePortal: '/assets/portals/portal_large.glb',      // 8.7 MB - Large boss portal
+    portalEruption: '/assets/portals/portal_eruption.glb', // 30 MB - Portal eruption VFX
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
