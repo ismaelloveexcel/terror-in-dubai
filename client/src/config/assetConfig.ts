@@ -15,6 +15,8 @@ export const assetConfig = {
     demogorgon: '019b6990-9a67-7072-a0fa-88c7b92b3b93',   // Void Reaper - 3.9 MB
     mindFlayer: '019b6a00-ef68-76eb-9820-97273eb1b774',   // Mind Flayer - 14.0 MB
     vecna: '019b6990-9eb0-78a7-b171-c6ae4467fce2',        // The Sovereign - 5.1 MB
+    // PREMIUM HYPERREALISTIC MONSTER - 53 MB!
+    hyperrealisticMonster: '/assets/enemies/hyperrealistic_monster.glb', // Ultra-detailed boss creature
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
