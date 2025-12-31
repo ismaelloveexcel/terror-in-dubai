@@ -92,6 +92,27 @@ cd ../server
 NODE_ENV=production npm start
 ```
 
+### AI 3D Asset Generation
+
+Generate new 3D assets using Meshy.ai's API:
+
+```bash
+# Set your Meshy.ai API key
+export MESHY_API_KEY=your_api_key_here
+
+# Generate a single asset
+node scripts/generate-3d-asset.js "scary demogorgon monster"
+
+# Generate with options
+node scripts/generate-3d-asset.js "glowing portal" --style realistic --output portal
+
+# Batch generate predefined asset packs
+node scripts/batch-generate-assets.js --stranger-things
+node scripts/batch-generate-assets.js --collectibles
+```
+
+Get your API key at [meshy.ai](https://meshy.ai).
+
 ### Deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment options including:
@@ -119,6 +140,9 @@ save-ismael/
 │   ├── src/
 │   │   └── index.js       # Server entry point
 │   └── assets/            # GLB model files
+├── scripts/                # Utility scripts
+│   ├── generate-3d-asset.js    # AI 3D asset generator (Meshy.ai)
+│   └── batch-generate-assets.js # Batch asset generation
 └── docs/                   # Documentation
 ```
 
