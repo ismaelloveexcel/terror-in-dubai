@@ -1,0 +1,28 @@
+# CODEOWNERS - Defines code ownership for pull request reviews
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files
+* @ismaelloveexcel
+
+# Client code
+/client/ @ismaelloveexcel
+
+# Server code
+/server/ @ismaelloveexcel
+
+# Game engine and core systems
+/client/src/core/ @ismaelloveexcel
+
+# Levels
+/client/src/levels/ @ismaelloveexcel
+
+# Enemy AI and behaviors
+/client/src/enemies/ @ismaelloveexcel
+
+# Build and deployment
+/Dockerfile @ismaelloveexcel
+/railway.toml @ismaelloveexcel
+/.github/workflows/ @ismaelloveexcel
+
+# Documentation
+*.md @ismaelloveexcel
