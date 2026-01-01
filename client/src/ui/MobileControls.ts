@@ -1,5 +1,5 @@
 import { AdvancedDynamicTexture, Ellipse, Control, Rectangle, TextBlock } from '@babylonjs/gui';
-import { Scene, Vector2 } from '@babylonjs/core';
+import { Scene, Vector2, PointerEventTypes } from '@babylonjs/core';
 import { InputManager } from '../core/InputManager';
 import { isMobile } from '../config/gameConfig';
 
@@ -14,16 +14,54 @@ export class MobileControls {
   private joystickOrigin: Vector2 = Vector2.Zero();
 
   constructor(private scene: Scene, private input: InputManager) {
-    this.ui = AdvancedDynamicTexture.CreateFullscreenUI('MobileUI');
+    this.ui = AdvancedDynamicTexture.CreateFullscreenUI('MobileUI', true, scene);
 
     if (isMobile) {
       this.createJoystick();
       this.createFireButton();
       this.createCrosshair();
+      this.setupScenePointerEvents();
     } else {
       // Desktop - just crosshair
       this.createCrosshair();
     }
+  }
+
+  private setupScenePointerEvents(): void {
+    this.scene.onPointerObservable.add((pointerInfo) => {
+      switch (pointerInfo.type) {
+        case PointerEventTypes.POINTERUP:
+          if (this.joystickPressed) {
+            this.joystickPressed = false;
+            this.joystickThumb.left = 0;
+            this.joystickThumb.top = 0;
+            this.input.setJoystick(0, 0);
+          }
+          break;
+        case PointerEventTypes.POINTERMOVE:
+          if (this.joystickPressed && pointerInfo.event) {
+            const coords = { x: pointerInfo.event.clientX, y: pointerInfo.event.clientY };
+            const delta = new Vector2(coords.x - this.joystickOrigin.x, coords.y - this.joystickOrigin.y);
+            const maxRadius = 30; // Half of container
+
+            // Clamp to circle
+            const distance = delta.length();
+            if (distance > maxRadius) {
+              delta.normalize().scaleInPlace(maxRadius);
+            }
+
+            this.joystickThumb.left = delta.x;
+            this.joystickThumb.top = delta.y;
+
+            // Normalize to -1 to 1
+            const normalizedX = delta.x / maxRadius;
+            const normalizedY = delta.y / maxRadius;
+
+            this.input.setJoystick(normalizedX, normalizedY);
+          }
+          break;
+      }
+    });
   }
 
   private createJoystick(): void {
@@ -49,42 +87,12 @@ export class MobileControls {
     this.joystickThumb.background = 'rgba(100, 100, 100, 0.5)';
     this.joystickContainer.addControl(this.joystickThumb);
 
-    // Touch events
+    // Touch events - use onPointerDownObservable on the container
     this.joystickContainer.onPointerDownObservable.add((coords) => {
       this.joystickPressed = true;
       this.joystickOrigin = new Vector2(coords.x, coords.y);
     });
-
-    this.ui.onPointerUpObservable.add(() => {
-      if (this.joystickPressed) {
-        this.joystickPressed = false;
-        this.joystickThumb.left = 0;
-        this.joystickThumb.top = 0;
-        this.input.setJoystick(0, 0);
-      }
-    });
-
-    this.ui.onPointerMoveObservable.add((coords) => {
-      if (this.joystickPressed) {
-        const delta = new Vector2(coords.x - this.joystickOrigin.x, coords.y - this.joystickOrigin.y);
-        const maxRadius = 30; // Half of container
-
-        // Clamp to circle
-        const distance = delta.length();
-        if (distance > maxRadius) {
-          delta.normalize().scaleInPlace(maxRadius);
-        }
-
-        this.joystickThumb.left = delta.x;
-        this.joystickThumb.top = delta.y;
-
-        // Normalize to -1 to 1
-        const normalizedX = delta.x / maxRadius;
-        const normalizedY = delta.y / maxRadius;
-
-        this.input.setJoystick(normalizedX, normalizedY);
-      }
-    });
+    // Pointer up and move are handled in setupScenePointerEvents()
   }
 
   private createFireButton(): void {

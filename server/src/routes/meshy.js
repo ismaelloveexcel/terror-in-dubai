@@ -1,5 +1,10 @@
+/**
+ * Meshy.ai API Routes
+ * Provides endpoints for text-to-3D model generation
+ */
+
 import { Router } from 'express';
-import { createPreviewTask, createRefineTask, getTaskStatus } from '../utils/meshyApi';
+import { createPreviewTask, createRefineTask, getTaskStatus } from '../utils/meshyApi.js';
 
 const router = Router();
 
@@ -8,7 +13,7 @@ router.post('/preview', async (req, res) => {
   try {
     const result = await createPreviewTask(req.body);
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -18,7 +23,7 @@ router.post('/refine', async (req, res) => {
   try {
     const result = await createRefineTask(req.body);
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
@@ -28,7 +33,7 @@ router.get('/task/:id', async (req, res) => {
   try {
     const result = await getTaskStatus(req.params.id);
     res.json(result);
-  } catch (error: any) {
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
