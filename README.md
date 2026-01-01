@@ -92,6 +92,42 @@ cd ../server
 NODE_ENV=production npm start
 ```
 
+### AI 3D Asset Generation
+
+#### Free Option: Shap-E (Local, No API Key)
+
+Generate 3D assets for FREE using OpenAI's Shap-E model locally:
+
+```bash
+# First-time setup (installs Python dependencies)
+node scripts/generate-3d-shap-e.js --setup
+
+# Generate a 3D asset
+node scripts/generate-3d-shap-e.js "scary demogorgon monster"
+node scripts/generate-3d-shap-e.js "glowing portal" --output portal
+```
+
+Requirements: Python 3.8+, ~4GB disk space. GPU recommended but CPU works.
+
+#### Meshy.ai (Cloud API, Credits Required)
+
+```bash
+# Set your Meshy.ai API key
+export MESHY_API_KEY=your_api_key_here
+
+# Generate a single asset
+node scripts/generate-3d-asset.js "scary demogorgon monster"
+
+# Generate with options
+node scripts/generate-3d-asset.js "glowing portal" --style realistic --output portal
+
+# Batch generate predefined asset packs
+node scripts/batch-generate-assets.js --stranger-things
+node scripts/batch-generate-assets.js --collectibles
+```
+
+Get your API key at [meshy.ai](https://meshy.ai).
+
 ### Deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for comprehensive deployment options including:
@@ -119,6 +155,10 @@ save-ismael/
 │   ├── src/
 │   │   └── index.js       # Server entry point
 │   └── assets/            # GLB model files
+├── scripts/                # Utility scripts
+│   ├── generate-3d-shap-e.js   # FREE local 3D generator (Shap-E)
+│   ├── generate-3d-asset.js    # AI 3D asset generator (Meshy.ai)
+│   └── batch-generate-assets.js # Batch asset generation
 └── docs/                   # Documentation
 ```
 

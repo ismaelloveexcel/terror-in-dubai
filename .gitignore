@@ -48,3 +48,6 @@ client/core
 
 # Large asset files (served separately)
 server/assets/*.glb
+
+# Shap-E local model (large, downloaded on setup)
+.shap-e/

@@ -1,0 +1,85 @@
+name: Feature Request
+description: Suggest a new feature for SAVE ISMAEL
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We'd love to hear your ideas for improving SAVE ISMAEL.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: A clear and concise description of what the problem is. Ex. I'm always frustrated when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like
+      placeholder: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions or features you've considered.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      options:
+        - Gameplay - New mechanics
+        - Gameplay - Enemy types
+        - Gameplay - Weapons
+        - Gameplay - Levels
+        - Graphics - Visual effects
+        - Graphics - Performance
+        - Audio - Music
+        - Audio - Sound effects
+        - UI/UX - Menus
+        - UI/UX - HUD
+        - Mobile - Controls
+        - Mobile - Performance
+        - Story - Dialogue
+        - Story - Evidence items
+        - Accessibility
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: How important is this feature to you?
+      options:
+        - Nice to have
+        - Would improve my experience
+        - Important for my enjoyment
+        - Critical - blocking my experience
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups or Examples
+      description: If applicable, add mockups, sketches, or examples from other games.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched for existing feature requests and this is not a duplicate
+          required: true
+        - label: This feature aligns with the game's Stranger Things theme
+          required: false
