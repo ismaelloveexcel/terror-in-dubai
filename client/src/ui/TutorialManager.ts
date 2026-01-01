@@ -255,11 +255,12 @@ export class TutorialManager {
     // Pulse animation with cleanup check
     let scale = 1;
     let growing = true;
-    let animationId: number;
+    let animationId: number = 0;
     
     const animate = () => {
       // Stop animation when overlay is cleared
       if (!this.tutorialOverlay || !highlight.isVisible) {
+        cancelAnimationFrame(animationId);
         return;
       }
       

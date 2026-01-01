@@ -17,6 +17,7 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import meshyRouter from './routes/meshy.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,7 +36,7 @@ app.use(helmet({
             scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Babylon.js
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "blob:"],
-            connectSrc: ["'self'", "ws:", "wss:"],
+            connectSrc: ["'self'", "ws:", "wss:", "https://api.meshy.ai"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
@@ -100,12 +101,16 @@ if (process.env.NODE_ENV === 'production') {
 
 // API Routes
 
+// Meshy.ai routes for 3D model generation
+app.use('/api/meshy', meshyRouter);
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         game: 'SAVE ISMAEL',
         version: '2.0.0',
+        meshyConfigured: !!process.env.MESHY_API_KEY,
         timestamp: new Date().toISOString()
     });
 });

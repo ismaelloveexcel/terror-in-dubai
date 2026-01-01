@@ -202,12 +202,7 @@ export class Overlays {
 
     this.currentOverlay = bg;
     this.ui.addControl(bg);
-
-    // Expose setTarget globally for easy name change
-    (window as any).setTarget = (name: string) => {
-      setRescueTarget(name);
-      this.showSettings(onBack);
-    };
+    // Note: setRescueTarget is available from gameConfig for programmatic name changes
   }
 
   private addSectionHeader(panel: StackPanel, text: string): void {

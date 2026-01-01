@@ -1,33 +1,20 @@
+/**
+ * Meshy.ai API Integration
+ * Handles text-to-3D model generation
+ */
+
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const MESHY_API_BASE = 'https://api.meshy.ai';
 const API_KEY = process.env.MESHY_API_KEY;
 
-export interface MeshyPreviewRequest {
-  prompt: string;
-  art_style?: string;
-  negative_prompt?: string;
-  ai_model?: string;
-}
-
-export interface MeshyRefineRequest {
-  preview_task_id: string;
-  texture_richness?: string;
-  enable_pbr?: boolean;
-}
-
-export interface MeshyTaskResponse {
-  id: string;
-  status: 'PENDING' | 'IN_PROGRESS' | 'SUCCEEDED' | 'FAILED';
-  model_urls?: {
-    glb?: string;
-  };
-  error?: string;
-}
-
-export async function createPreviewTask(data: MeshyPreviewRequest): Promise<{ id: string }> {
+export async function createPreviewTask(data) {
   if (!API_KEY) {
     console.warn('⚠️ MESHY_API_KEY not set - returning mock task ID');
     return { id: `mock-preview-${Date.now()}` };
@@ -51,13 +38,13 @@ export async function createPreviewTask(data: MeshyPreviewRequest): Promise<{ id
       }
     );
     return { id: response.data.result };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Meshy preview error:', error.response?.data || error.message);
     throw new Error('Failed to create preview task');
   }
 }
 
-export async function createRefineTask(data: MeshyRefineRequest): Promise<{ id: string }> {
+export async function createRefineTask(data) {
   if (!API_KEY) {
     console.warn('⚠️ MESHY_API_KEY not set - returning mock task ID');
     return { id: `mock-refine-${Date.now()}` };
@@ -80,13 +67,13 @@ export async function createRefineTask(data: MeshyRefineRequest): Promise<{ id: 
       }
     );
     return { id: response.data.result };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Meshy refine error:', error.response?.data || error.message);
     throw new Error('Failed to create refine task');
   }
 }
 
-export async function getTaskStatus(taskId: string): Promise<MeshyTaskResponse> {
+export async function getTaskStatus(taskId) {
   // Check if cached file exists
   const assetPath = path.join(__dirname, '../../assets', `${taskId}.glb`);
   if (fs.existsSync(assetPath)) {
@@ -132,13 +119,13 @@ export async function getTaskStatus(taskId: string): Promise<MeshyTaskResponse> 
       status: data.status,
       model_urls: data.model_urls
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Meshy task status error:', error.response?.data || error.message);
     throw new Error('Failed to get task status');
   }
 }
 
-async function downloadModel(url: string, taskId: string): Promise<void> {
+async function downloadModel(url, taskId) {
   const assetsDir = path.join(__dirname, '../../assets');
   if (!fs.existsSync(assetsDir)) {
     fs.mkdirSync(assetsDir, { recursive: true });

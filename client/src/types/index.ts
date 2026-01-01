@@ -303,3 +303,34 @@ export interface ILoadingProgress {
 }
 
 export type LoadingCallback = (progress: ILoadingProgress) => void;
+
+// =============================================================================
+// CONFIG TYPES
+// =============================================================================
+
+export interface LevelConfig {
+  id: string;
+  title: string;
+  storyCard: string;
+  ismaelMessages: string[];
+}
+
+export interface MemoryFragment {
+  id: string;
+  position: Vector3;
+  text: string;
+  collected: boolean;
+}
+
+export interface GameConfig {
+  familyMode: boolean;
+  nephewName: string;
+  rescueTarget: string;
+}
+
+export interface WeaponConfig {
+  damage: number;
+  fireRate: number;
+  recoil: number;
+  range: number;
+}

@@ -21,7 +21,10 @@ const getEnvString = (key: string, defaultValue: string): string => {
 
 export const gameConfig = {
   // Story Configuration
+  // Both playerName and nephewName reference the same VITE_PLAYER_NAME env var.
+  // nephewName is kept for backward compatibility with storyConfig.ts and Overlays.ts
   playerName: getEnvString('VITE_PLAYER_NAME', 'Aidan'),
+  nephewName: getEnvString('VITE_PLAYER_NAME', 'Aidan'),
   rescueTarget: getEnvString('VITE_RESCUE_TARGET', 'Mammoo Ismael'),
   familyMode: getEnvBoolean('VITE_FAMILY_MODE', true),
   
@@ -371,9 +374,117 @@ export const levelConfig = {
 // PERFORMANCE CONFIGURATION
 // =============================================================================
 
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+// =============================================================================
+// MOBILE DETECTION
+// =============================================================================
+
+export const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
   navigator.userAgent
 );
+
+// =============================================================================
+// SETTINGS SYSTEM
+// =============================================================================
+
+export interface GameSettings {
+  // Audio
+  masterVolume: number;
+  musicVolume: number;
+  sfxVolume: number;
+  
+  // Graphics
+  graphicsQuality: 'low' | 'medium' | 'high';
+  postProcessing: boolean;
+  particles: boolean;
+  shadows: boolean;
+  
+  // Controls
+  sensitivity: number;
+  invertY: boolean;
+  
+  // Accessibility
+  showFPS: boolean;
+  reducedMotion: boolean;
+  highContrast: boolean;
+  
+  // Difficulty
+  difficulty: 'easy' | 'normal' | 'hard';
+}
+
+// Default settings
+export const defaultSettings: GameSettings = {
+  masterVolume: 0.8,
+  musicVolume: 0.6,
+  sfxVolume: 0.8,
+  graphicsQuality: 'high',
+  postProcessing: true,
+  particles: true,
+  shadows: true,
+  sensitivity: 1.0,
+  invertY: false,
+  showFPS: false,
+  reducedMotion: false,
+  highContrast: false,
+  difficulty: 'normal'
+};
+
+// Current settings (load from localStorage)
+export const settings: GameSettings = { ...defaultSettings };
+
+// Load settings from localStorage
+function loadSettings(): void {
+  const stored = localStorage.getItem('gameSettings');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      Object.assign(settings, parsed);
+    } catch (e) {
+      console.warn('Failed to load settings, using defaults');
+    }
+  }
+}
+
+// Save settings to localStorage
+export function saveSettings(): void {
+  localStorage.setItem('gameSettings', JSON.stringify(settings));
+}
+
+// Update a setting
+export function updateSetting<K extends keyof GameSettings>(key: K, value: GameSettings[K]): void {
+  settings[key] = value;
+  saveSettings();
+}
+
+// Toggle family mode
+export function toggleFamilyMode(): void {
+  gameConfig.familyMode = !gameConfig.familyMode;
+  localStorage.setItem('familyMode', String(gameConfig.familyMode));
+}
+
+// Set rescue target name
+export function setRescueTarget(name: string): void {
+  gameConfig.rescueTarget = name;
+  localStorage.setItem('rescueTarget', name);
+}
+
+// Get difficulty multipliers
+export function getDifficultyMultipliers(): { health: number; damage: number; enemyDamage: number } {
+  switch (settings.difficulty) {
+    case 'easy':
+      return { health: 1.5, damage: 1.2, enemyDamage: 0.5 };
+    case 'hard':
+      return { health: 0.75, damage: 1.0, enemyDamage: 1.5 };
+    default:
+      return { health: 1.0, damage: 1.0, enemyDamage: 1.0 };
+  }
+}
+
+// Initialize settings on load
+loadSettings();
+
+// =============================================================================
+// PERFORMANCE CONFIGURATION
+// =============================================================================
 
 export const performanceConfig = {
   isMobile,

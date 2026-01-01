@@ -329,6 +329,10 @@ export class InputManager {
     this.inputState.joystickY = y;
   }
   
+  public setFiring(isFiring: boolean): void {
+    this.inputState.isMobileFirePressed = isFiring;
+  }
+  
   // ===========================================================================
   // MOVEMENT HELPERS
   // ===========================================================================
