@@ -11,7 +11,7 @@
     "clean": "rm -rf client/dist server/dist node_modules client/node_modules server/node_modules"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^9.2.1"
   },
   "author": "Mammoo Ismael",
   "license": "MIT",
