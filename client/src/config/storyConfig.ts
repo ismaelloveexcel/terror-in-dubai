@@ -36,22 +36,52 @@ export const levelConfigs: LevelConfig[] = [
   },
   {
     id: 'level2',
-    title: 'Illusion',
-    storyCard: 'The city is lying to you. Signal Anchors amplify the interference. Break them and find ' + gameConfig.rescueTarget + '.',
+    title: 'The Descent',
+    storyCard: 'The metro system has been corrupted. Something bigger lurks in the darkness.',
     ismaelMessages: [
-      'My voice is breaking through... you\'re getting closer.',
-      'Don\'t trust what you see. Trust what you feel.',
-      'I\'m here. I\'m waiting for you.'
+      'The tunnels loop... but you can find a way.',
+      'I can hear you coming. Don\'t stop.',
+      'Something massive is down here with me.'
     ]
   },
   {
     id: 'level3',
-    title: 'The Climax',
-    storyCard: 'The source is here, at the edge of Dubai. End it and seal the breach. Save ' + gameConfig.rescueTarget + '.',
+    title: 'The Window',
+    storyCard: 'The Frame shows both worlds now. The Upside Down bleeds through.',
     ismaelMessages: [
-      'This is it. The final confrontation.',
-      'You\'re stronger than you know.',
-      'Finish this. Save our city.'
+      'The view from up here... you can see both Dubais.',
+      'Don\'t look down. Keep climbing.',
+      'I recorded something on my phone. Find it.'
+    ]
+  },
+  {
+    id: 'level4',
+    title: 'The Palace',
+    storyCard: 'The luxury waterfront has become the Mind Flayer\'s domain. Defeat the beast.',
+    ismaelMessages: [
+      'Something huge controls this place... it\'s in my head.',
+      'My watch stopped at 7:42... that\'s when everything changed.',
+      'It knows you\'re coming. Be ready.'
+    ]
+  },
+  {
+    id: 'level5',
+    title: 'Almost There',
+    storyCard: 'The heart of Dubai. ' + gameConfig.rescueTarget + ' is close - you can feel it.',
+    ismaelMessages: [
+      'I got you something for your birthday... Stranger Things stuff.',
+      'I can see the tower from here. He\'s taking me there.',
+      'Don\'t give up. I\'m so close.'
+    ]
+  },
+  {
+    id: 'level6',
+    title: 'The Final Battle',
+    storyCard: 'Vecna\'s throne. ' + gameConfig.rescueTarget + ' is here. This ends now.',
+    ismaelMessages: [
+      'Vecna has me... he wants to use me to get to you.',
+      'Remember what I taught you... memories are power.',
+      'Use our memories. That\'s how you beat him.'
     ]
   }
 ];
@@ -115,6 +145,66 @@ export const memoryFragments: Record<string, MemoryFragment[]> = {
       id: 'memory3_3',
       position: new Vector3(0, 1, 30),
       text: 'You were born to be a hero.',
+      collected: false
+    }
+  ],
+  level4: [
+    {
+      id: 'memory4_1',
+      position: new Vector3(30, 1, -30),
+      text: 'Remember the boat rides at the Marina?',
+      collected: false
+    },
+    {
+      id: 'memory4_2',
+      position: new Vector3(-15, 1, 40),
+      text: 'The water used to sparkle. We\'ll make it sparkle again.',
+      collected: false
+    },
+    {
+      id: 'memory4_3',
+      position: new Vector3(10, 1, 60),
+      text: 'Even in darkness, love is the strongest light.',
+      collected: false
+    }
+  ],
+  level5: [
+    {
+      id: 'memory5_1',
+      position: new Vector3(-20, 1, -20),
+      text: 'The mall was always our adventure ground.',
+      collected: false
+    },
+    {
+      id: 'memory5_2',
+      position: new Vector3(25, 1, 30),
+      text: 'Movie nights. Popcorn. Us against the world.',
+      collected: false
+    },
+    {
+      id: 'memory5_3',
+      position: new Vector3(-5, 1, 70),
+      text: 'You never gave up on anyone. That\'s your superpower.',
+      collected: false
+    }
+  ],
+  level6: [
+    {
+      id: 'memory6_1',
+      position: new Vector3(-25, 1, -15),
+      text: 'At the top of the world, nothing can stop us.',
+      collected: false
+    },
+    {
+      id: 'memory6_2',
+      position: new Vector3(20, 1, 5),
+      text: 'Our bond is stronger than any curse.',
+      collected: false
+    },
+    {
+      id: 'memory6_3',
+      position: new Vector3(0, 1, 20),
+      text: 'Love always wins. Always.',
       collected: false
     }
   ]

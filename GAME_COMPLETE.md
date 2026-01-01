@@ -5,13 +5,13 @@
 A **fully functional, production-ready 3D FPS game** with:
 
 ### ✨ Core Features
-- ✅ 3 complete levels (Dubai Metro, Downtown, Desert Arena)
+- ✅ 6 complete levels (Ibn Battuta Mall, Dubai Metro, Dubai Frame, Dubai Marina, Downtown Dubai, Burj Khalifa)
 - ✅ Full FPS gameplay (movement, shooting, health system)
 - ✅ Mobile + Desktop controls (auto-detection)
-- ✅ 4 enemy types + 1 boss with phased combat
+- ✅ 4 enemy types + 2 bosses (Mind Flayer and Vecna) with phased combat
 - ✅ Stranger Things-inspired story (Dubai setting)
 - ✅ Personal gift narrative (Aidan saves Uncle Ismael)
-- ✅ Memory collectibles (9 total, 3 per level)
+- ✅ Memory collectibles (18 total, 3 per level)
 - ✅ Two modes (Family/Public with name customization)
 
 ### 📱 Mobile Optimizations
@@ -23,35 +23,48 @@ A **fully functional, production-ready 3D FPS game** with:
 
 ### 🎨 Visual Systems
 - ✅ Upside-Down Dubai environment (fog, vines, corrupted colors)
-- ✅ Level-specific theming (Metro tiles, Downtown plaza, Desert arena)
+- ✅ Level-specific theming (Mall, Metro, Frame, Marina, Downtown, Burj Khalifa)
 - ✅ Placeholder primitives (works without Meshy)
 - ✅ Meshy.ai integration ready (auto asset loading)
 - ✅ HUD with health bar, damage flash, crosshair
 
 ### 🎯 Gameplay Mechanics
 
-**Level 1: The Beginning**
-- Destroy 5 Hive spawners
-- Hives spawn swarm + flying enemies
-- Elite enemy appears after 2 hives destroyed
-- Win: All hives destroyed
+**Level 1: Ibn Battuta Mall - The Beginning**
+- Tutorial level with basic enemies
+- Collect Uncle's car keys and parking ticket
+- Find Aidan's Nail Bat weapon
+- Win: Clear all enemy waves and reach exit
 
-**Level 2: Illusion**
-- Destroy 3 Signal Anchors
-- 4 interference mechanics:
-  1. Shadow enemies (fake, dissolve in 1 hit)
-  2. HUD flicker (visual only)
-  3. Phantom audio (directional sound cues)
-  4. Movement drag (periodic slowdown)
-- "SAVE ME, ISMAEL" lights wall (4 messages)
-- Win: All anchors destroyed
+**Level 2: Dubai Metro - The Descent**
+- Underground tunnels with first Demogorgon encounter
+- Navigate corrupted metro station and tunnels
+- Collect Uncle's wallet with photo
+- Win: Defeat the Demogorgon boss
 
-**Level 3: The Climax**
-- Boss fight with 3 phases
-- **Phase 1 (100→70%):** Psychic stun mechanic (shoot rune to break)
-- **Phase 2 (70→35%):** Teleportation + minion spawns
-- **Phase 3 (35→0%):** Ground hazard zones + faster attacks
-- Win: Boss defeated
+**Level 3: Dubai Frame - The Window**
+- Climb the iconic landmark
+- Glass sky bridge escape sequence
+- Collect Uncle's cracked phone with video message
+- Win: Clear the observation deck and escape
+
+**Level 4: Dubai Marina - The Palace (BOSS)**
+- Corrupted waterfront with twisted towers
+- Navigate promenade and abandoned boats
+- Collect Uncle's watch (stopped at 7:42 PM)
+- Win: Defeat the Mind Flayer boss
+
+**Level 5: Downtown Dubai - Almost There**
+- Dubai Mall and fountain area
+- Gauntlet through corrupted commercial heart
+- Collect gift bag with Stranger Things merchandise
+- Win: Reach the exit toward Burj Khalifa
+
+**Level 6: Burj Khalifa - The Final Battle (FINAL BOSS)**
+- Vecna's throne at observation deck
+- Free Uncle Ismael from captivity
+- 3-phase boss fight with Vecna
+- Win: Defeat Vecna and escape with Uncle
 
 ### 💝 Story Beats
 - ✅ Prologue (sets up rift in Dubai)
@@ -176,12 +189,12 @@ Refreshes game → **Custom 3D models load**
 
 ## 🎯 What Works Out of the Box
 
-✅ **All 3 levels are playable**
+✅ **All 6 levels are playable**
 ✅ **All enemies attack and can be killed**
-✅ **Boss has all 3 phases**
+✅ **Both bosses (Mind Flayer and Vecna) have multi-phase combat**
 ✅ **Mobile controls work**
 ✅ **Story screens display**
-✅ **Memory collectibles spawn**
+✅ **Memory collectibles spawn (18 total)**
 ✅ **Health system works**
 ✅ **Shooting + damage works**
 ✅ **Level progression works**

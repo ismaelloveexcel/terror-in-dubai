@@ -11,7 +11,7 @@
 
 ## 🎯 What This Is
 
-A **complete 3D first-person shooter game** inspired by Stranger Things, set in a corrupted "Upside-Down Dubai". The player (Aidan) must fight through 3 levels to save his Uncle Ismael from the rift.
+A **complete 3D first-person shooter game** inspired by Stranger Things, set in a corrupted "Upside-Down Dubai". The player (Aidan) must fight through 6 levels across iconic Dubai landmarks to save his Uncle Ismael from Vecna's clutches.
 
 **Genre:** First-person shooter, horror-inspired, story-driven
 **Platform:** Web (desktop + mobile)
@@ -24,39 +24,57 @@ A **complete 3D first-person shooter game** inspired by Stranger Things, set in 
 
 | Feature | Count |
 |---------|-------|
-| **Levels** | 3 complete levels |
-| **Enemy types** | 4 (Swarm, Flying, Elite, Boss) |
-| **Story screens** | 8 (Prologue, intros, complete, finale, credits) |
-| **Boss phases** | 3 (100%→70%→35%→0%) |
-| **Collectibles** | 9 memory fragments (3 per level) |
-| **Interference mechanics** | 4 (Level 2) |
+| **Levels** | 6 complete levels |
+| **Enemy types** | 4 (Demodog, Demobat, Demogorgon, Shadow Clone) |
+| **Boss enemies** | 2 (Mind Flayer, Vecna) |
+| **Story screens** | 12+ (Prologue, intros, complete, finale, credits) |
+| **Collectibles** | 18 memory fragments (3 per level) |
+| **Evidence items** | 6 (one per level) |
 | **Control schemes** | 2 (Desktop + Mobile) |
 | **Game modes** | 2 (Family + Public) |
-| **Source files** | 48 TypeScript/config files |
-| **Total lines of code** | ~5,000+ lines |
+| **Source files** | 55+ TypeScript/config files |
+| **Total lines of code** | ~8,000+ lines |
 
 ---
 
 ## 🎨 Visual Features
 
 ### Levels
-1. **Level 1: The Beginning**
-   - Setting: Dubai Metro station (corrupted)
-   - Environment: Underground corridors, pillars, vines
-   - Objective: Destroy 5 hives
-   - Enemies: Swarm + Flying + 1 Elite
+1. **Level 1: Ibn Battuta Mall - The Beginning**
+   - Setting: Persia Court of Ibn Battuta Mall
+   - Environment: Mall corridor, fountain, shops, Persian arch
+   - Objective: Navigate mall and fight through enemy waves
+   - Special: Find Aidan's Nail Bat weapon, Portal tutorial
 
-2. **Level 2: Illusion**
-   - Setting: Downtown Dubai boulevard
-   - Environment: Plaza, tall tower silhouette, buildings
-   - Objective: Destroy 3 Signal Anchors
-   - Mechanics: 4 mind-play effects + lights wall
+2. **Level 2: Dubai Metro - The Descent**
+   - Setting: Underground Metro tunnels
+   - Environment: Platform, rails, abandoned trains, curved ceiling
+   - Objective: Fight through tunnels and defeat Demogorgon
+   - Boss: Demogorgon (first major boss encounter)
 
-3. **Level 3: The Climax**
-   - Setting: Desert arena near Dubai
-   - Environment: Circular arena, skyline, ground cracks
-   - Objective: Defeat boss
-   - Mechanics: 3-phase boss fight, rune pillars, hazard zones
+3. **Level 3: Dubai Frame - The Window**
+   - Setting: Iconic Dubai Frame landmark
+   - Environment: Ground plaza, observation deck, glass sky bridge
+   - Objective: Climb the Frame, find the phone, escape
+   - Special: Vertigo glass walk, portal particles
+
+4. **Level 4: Dubai Marina - The Palace (BOSS LEVEL)**
+   - Setting: Corrupted Marina waterfront
+   - Environment: Promenade, twisted towers, abandoned boats, boss arena
+   - Objective: Navigate Marina, defeat Mind Flayer
+   - Boss: Mind Flayer with psychic attacks
+
+5. **Level 5: Downtown Dubai - Almost There**
+   - Setting: Dubai Mall and Fountain area
+   - Environment: Boulevard, mall entrance, fountain lake, souk area
+   - Objective: Fight through gauntlet to reach Burj Khalifa
+   - Special: Burj Khalifa silhouette in distance, uncle sighting
+
+6. **Level 6: Burj Khalifa - The Final Battle (FINAL BOSS)**
+   - Setting: Observation deck at Level 148
+   - Environment: Circular arena, Vecna's throne, void portal
+   - Objective: Free Uncle Ismael, defeat Vecna, escape
+   - Boss: Vecna with 3 phases (psychic, teleport, minions)
 
 ### Visual Style
 - Dark, eerie Upside-Down aesthetic
@@ -73,34 +91,48 @@ A **complete 3D first-person shooter game** inspired by Stranger Things, set in 
 - **Movement:** Walk, sprint, smooth FPS controls
 - **Combat:** Hitscan shooting, recoil, damage system
 - **Health:** 100 HP, damage flash, death/respawn
-- **Collection:** Memory fragments (optional)
+- **Collection:** Memory fragments + Evidence items
+- **Weapons:** Pistol + Aidan's Nail Bat (found in Level 1)
 
 ### Enemy AI
-- **Swarm (Demodog):** Melee chase, swarm behavior
-- **Flying (Demobat):** Hover + dive attacks
-- **Elite (Demogorgon):** Heavy melee, roar, knockback
-- **Boss (Vecna):** 3 phases, teleport, summon, hazards
+- **Demodog:** Melee chase, swarm behavior
+- **Demobat:** Hover + dive attacks
+- **Demogorgon:** Heavy melee, roar, knockback (Level 2 boss)
+- **Mind Flayer:** Psychic attacks, minion control (Level 4 boss)
+- **Vecna:** 3 phases, teleport, summon, hazards (Final boss)
 
 ### Level Mechanics
 
-**Level 1:**
-- Hive spawners (health: 100, spawn interval: 5s)
-- Elite trigger (spawns after 2 hives destroyed)
+**Level 1 - Ibn Battuta Mall:**
+- Tutorial level with portal spawner
+- Enemy waves trigger on player progress
+- Aidan's Nail Bat weapon pickup
 
-**Level 2:**
-- Interference pulses (every 15s)
-- Shadow enemies (1-hit illusions)
-- HUD flicker (visual only)
-- Audio bait (phantom sounds)
-- Movement drag (periodic slowdown)
-- Lights wall messages (4 variations)
+**Level 2 - Dubai Metro:**
+- Underground tunnels with abandoned trains
+- Boss encounter: Demogorgon
+- Train shaking during boss fight
 
-**Level 3:**
-- Boss phases (100% → 70% → 35% → 0%)
-- Psychic stun (shoot rune to break, 3s window)
-- Teleportation (Phase 2)
-- Minion spawns (Phase 2, max 5)
-- Hazard zones (Phase 3, red ground damage)
+**Level 3 - Dubai Frame:**
+- Vertical level with elevator progression
+- Glass sky bridge escape sequence
+- Observation deck combat
+
+**Level 4 - Dubai Marina:**
+- Waterfront combat across promenade
+- Boss arena over corrupted water
+- Boss: Mind Flayer with psychic abilities
+
+**Level 5 - Downtown Dubai:**
+- Multi-zone gauntlet (mall, fountains, souk)
+- Uncle Ismael sighting event
+- "ALMOST THERE" lights wall message
+
+**Level 6 - Burj Khalifa:**
+- Final arena with ritual circles
+- Uncle Ismael rescue mechanics
+- Final Boss: Vecna (3 phases)
+- Victory sequence and portal collapse
 
 ---
 
@@ -108,17 +140,20 @@ A **complete 3D first-person shooter game** inspired by Stranger Things, set in 
 
 ### Narrative Structure
 1. **Prologue:** Sets up rift in Dubai, Ismael's disappearance
-2. **Level Intros:** Story cards with mission context
+2. **Level Intros:** Story cards with mission context for all 6 levels
 3. **Ismael's Messages:** Guidance/hope between levels
-4. **Memory Fragments:** Personal memories (collectibles)
-5. **Finale:** Reunion scene, Dubai saved
-6. **Credits:** Personal message to Aidan
+4. **Memory Fragments:** 18 personal memories (3 per level)
+5. **Evidence Items:** 6 items tracking Uncle's journey
+6. **Finale:** Reunion scene at Burj Khalifa, Dubai saved
+7. **Credits:** Personal message to Aidan
 
 ### Key Story Beats
 - "Dubai went dark. A breach opened beneath the city."
-- "Destroy the Hives before the gate stabilizes."
-- "SAVE ME, ISMAEL" (lights wall in Level 2)
-- "You did it, Aidan. I knew you would." (finale)
+- Evidence trail follows Uncle's path through Dubai
+- Mind Flayer confrontation at Marina
+- Uncle sighting in Downtown
+- "Use our memories. That's how you beat him."
+- Vecna defeated, portal collapses
 - "Never stop being brave. I'm proud of you." (credits)
 
 ### Personalization
@@ -207,11 +242,11 @@ A **complete 3D first-person shooter game** inspired by Stranger Things, set in 
 - ✅ Fallback systems (primitives)
 
 **Gameplay:**
-- ✅ All 3 levels playable
+- ✅ All 6 levels playable
 - ✅ Win conditions work
 - ✅ Death/restart works
 - ✅ Enemy AI functional
-- ✅ Boss phases work
+- ✅ Both bosses work (Mind Flayer + Vecna)
 - ✅ Story progression complete
 
 **Mobile:**
@@ -300,12 +335,10 @@ npm run generate-assets
 
 If you want to expand later:
 - [ ] Add sounds (gunfire, enemy growls, ambient)
-- [ ] Add more levels
 - [ ] Add multiplayer co-op
 - [ ] Add weapon upgrades
 - [ ] Add difficulty settings
 - [ ] Add boss cutscenes
-- [ ] Add save system
 - [ ] Add achievements
 
 **But the game is 100% complete as-is!**
@@ -314,12 +347,12 @@ If you want to expand later:
 
 ## 🏆 Final Stats
 
-**Development Time:** ~1 session
-**Lines of Code:** 5,000+
-**Files Created:** 54
-**Levels:** 3 complete
-**Enemies:** 4 types
-**Story Screens:** 8
+**Development Time:** Multiple sessions
+**Lines of Code:** 8,000+
+**Files Created:** 55+
+**Levels:** 6 complete
+**Enemy Types:** 4 + 2 bosses
+**Story Screens:** 12+
 **Quality:** Production-ready
 **Status:** ✅ DONE
 
@@ -330,7 +363,7 @@ If you want to expand later:
 You now have a **complete, polished, production-ready 3D FPS game** created as a heartfelt gift for Aidan. The game:
 
 ✅ Runs on desktop + mobile
-✅ Has full story + gameplay
+✅ Has full story + gameplay across 6 iconic Dubai levels
 ✅ Works without Meshy (primitives)
 ✅ Can use Meshy for custom models
 ✅ Is deployable to Replit
