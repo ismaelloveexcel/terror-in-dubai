@@ -21,8 +21,10 @@ const getEnvString = (key: string, defaultValue: string): string => {
 
 export const gameConfig = {
   // Story Configuration
+  // Both playerName and nephewName reference the same VITE_PLAYER_NAME env var.
+  // nephewName is kept for backward compatibility with storyConfig.ts and Overlays.ts
   playerName: getEnvString('VITE_PLAYER_NAME', 'Aidan'),
-  nephewName: getEnvString('VITE_PLAYER_NAME', 'Aidan'), // Alias for backward compatibility
+  nephewName: getEnvString('VITE_PLAYER_NAME', 'Aidan'),
   rescueTarget: getEnvString('VITE_RESCUE_TARGET', 'Mammoo Ismael'),
   familyMode: getEnvBoolean('VITE_FAMILY_MODE', true),
   
