@@ -324,7 +324,9 @@ export class AudioManager {
       try {
         this.ambientOscillator.stop();
         this.ambientOscillator.disconnect();
-      } catch (e) {}
+      } catch (e) {
+        // Oscillator may already be stopped
+      }
       this.ambientOscillator = null;
     }
     if (this.ambientGain) {
@@ -377,7 +379,9 @@ export class AudioManager {
       try {
         this.combatOscillator.stop();
         this.combatOscillator.disconnect();
-      } catch (e) {}
+      } catch (e) {
+        // Oscillator may already be stopped
+      }
       this.combatOscillator = null;
     }
     if (this.combatGain) {
